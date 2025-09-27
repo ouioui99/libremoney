@@ -6,7 +6,7 @@ export const colors = {
     accent: "#4a827f", // ボタンやリンクのアクセント
     secondary: "#b2d4cf", // カードやサブ背景
     card: "#E0F2F1", // カード背景
-    operator: "orange", // 電卓の演算子ボタン
+    operator: "#4CAF50", // 電卓の演算子ボタン
     number: "#444", // 電卓の数字ボタン
     border: "#B2DFDB", // ボタン枠やカード枠
     placeholder: "#A0A0A0", // 入力欄のプレースホルダー
@@ -21,7 +21,7 @@ export const colors = {
     accent: "#4a827f",
     secondary: "#273a3a",
     card: "#1C2C2B",
-    operator: "orange",
+    operator: "#66BB6A",
     number: "#444",
     border: "#264141",
     placeholder: "#888888",
