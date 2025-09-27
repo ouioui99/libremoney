@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import SafeAreaLayout from "../components/SafeAreaLayout";
 
 const buttons = [
   ["AC", "⌫", "%", "÷"],
@@ -44,75 +45,77 @@ export default function ExpenseScreen() {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: "black" }}>
-      {/* 金額表示 */}
-      <Text
-        style={{
-          color: "white",
-          fontSize: 40,
-          textAlign: "right",
-          marginBottom: 20,
-        }}
-      >
-        {expression || "0"}
-      </Text>
-
-      {/* 日付選択 */}
-      <TouchableOpacity
-        style={{
-          backgroundColor: "#333",
-          padding: 15,
-          borderRadius: 8,
-          marginBottom: 20,
-        }}
-        onPress={() => setShowPicker(true)}
-      >
-        <Text style={{ color: "white", fontSize: 18 }}>
-          {date.toLocaleDateString()}
-        </Text>
-      </TouchableOpacity>
-
-      {showPicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={(_, selectedDate) => {
-            setShowPicker(false);
-            if (selectedDate) setDate(selectedDate);
+    <SafeAreaLayout>
+      <View style={{ flex: 1, padding: 20, backgroundColor: "black" }}>
+        {/* 金額表示 */}
+        <Text
+          style={{
+            color: "white",
+            fontSize: 40,
+            textAlign: "right",
+            marginBottom: 20,
           }}
-        />
-      )}
+        >
+          {expression || "0"}
+        </Text>
 
-      {/* 電卓ボタン */}
-      <View style={{ flex: 1, justifyContent: "space-between" }}>
-        {buttons.map((row, rowIndex) => (
-          <View
-            key={rowIndex}
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
-          >
-            {row.map((btn) => (
-              <TouchableOpacity
-                key={btn}
-                style={{
-                  flex: 1,
-                  margin: 5,
-                  aspectRatio: 1,
-                  borderRadius: 50,
-                  backgroundColor: ["÷", "×", "−", "+", "="].includes(btn)
-                    ? "orange"
-                    : "#444",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={() => handlePress(btn)}
-              >
-                <Text style={{ color: "white", fontSize: 24 }}>{btn}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
+        {/* 日付選択 */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#333",
+            padding: 15,
+            borderRadius: 8,
+            marginBottom: 20,
+          }}
+          onPress={() => setShowPicker(true)}
+        >
+          <Text style={{ color: "white", fontSize: 18 }}>
+            {date.toLocaleDateString()}
+          </Text>
+        </TouchableOpacity>
+
+        {showPicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={(_, selectedDate) => {
+              setShowPicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
+
+        {/* 電卓ボタン */}
+        <View style={{ flex: 1, justifyContent: "space-between" }}>
+          {buttons.map((row, rowIndex) => (
+            <View
+              key={rowIndex}
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              {row.map((btn) => (
+                <TouchableOpacity
+                  key={btn}
+                  style={{
+                    flex: 1,
+                    margin: 5,
+                    aspectRatio: 1,
+                    borderRadius: 50,
+                    backgroundColor: ["÷", "×", "−", "+", "="].includes(btn)
+                      ? "orange"
+                      : "#444",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => handlePress(btn)}
+                >
+                  <Text style={{ color: "white", fontSize: 24 }}>{btn}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </View>
       </View>
-    </View>
+    </SafeAreaLayout>
   );
 }
