@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
+  const scheme = useColorScheme();
 
   return (
     <SafeAreaLayout>

@@ -1,33 +1,22 @@
 import React, { useState } from "react";
-import { View, Text, Platform, TouchableOpacity } from "react-native";
+import { View, Text, Platform, TouchableOpacity, Button } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useTheme } from "../contexts/ThemeContext";
+import SafeAreaLayout from "../components/SafeAreaLayout";
 
 export default function SettingsScreen() {
-  const [showPicker, setShowPicker] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-
-  const onChange = (_event: any, selectedDate?: Date) => {
-    setShow(false); // カレンダー閉じる
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
+  const { setMode, mode } = useTheme();
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <TouchableOpacity onPress={() => setShow(true)}>
-        <Text>日付を選択: {date.toLocaleDateString()}</Text>
-      </TouchableOpacity>
+    <SafeAreaLayout>
+      <View>
+        <Button title="ライト" onPress={() => setMode("light")} />
+        <Button title="ダーク" onPress={() => setMode("dark")} />
+        <Button title="端末に従う" onPress={() => setMode("system")} />
 
-      {show && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display={Platform.OS === "ios" ? "inline" : "default"}
-          onChange={onChange}
-        />
-      )}
-    </View>
+        <View style={{ marginTop: 20 }}>
+          <Button title={`現在の設定: ${mode}`} onPress={() => {}} />
+        </View>
+      </View>
+    </SafeAreaLayout>
   );
 }

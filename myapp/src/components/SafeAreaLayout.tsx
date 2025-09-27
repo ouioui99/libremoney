@@ -1,6 +1,8 @@
 import React, { ReactNode } from "react";
 import { View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../theme/colors";
 
 type Props = {
   children: ReactNode;
@@ -9,6 +11,7 @@ type Props = {
 
 export default function SafeAreaLayout({ children, style }: Props) {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   return (
     <View
@@ -18,7 +21,8 @@ export default function SafeAreaLayout({ children, style }: Props) {
           paddingTop: insets.top,
           paddingLeft: insets.left,
           paddingRight: insets.right,
-          backgroundColor: "black", // 👈 背景色を黒にする
+          backgroundColor:
+            theme === "dark" ? colors.dark.background : colors.light.background,
         },
         style,
       ]}
