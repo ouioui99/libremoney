@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Modal } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Platform,
+  TouchableWithoutFeedback,
+} from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import SafeAreaLayout from "../components/SafeAreaLayout";
+import CalendarModal from "../components/CalenderModal";
 
 const buttons = [
   ["AC", "⌫", "%", "÷"],
@@ -44,6 +52,13 @@ export default function ExpenseScreen() {
     }
   };
 
+  const handelOnChange = (_event: any, selectedDate?: Date) => {
+    setShowPicker(false); // カレンダー閉じる
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
   return (
     <SafeAreaLayout>
       <View style={{ flex: 1, padding: 20, backgroundColor: "black" }}>
@@ -74,17 +89,12 @@ export default function ExpenseScreen() {
           </Text>
         </TouchableOpacity>
 
-        {showPicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display="default"
-            onChange={(_, selectedDate) => {
-              setShowPicker(false);
-              if (selectedDate) setDate(selectedDate);
-            }}
-          />
-        )}
+        <CalendarModal
+          visible={showPicker}
+          date={date}
+          onClose={() => setShowPicker(false)}
+          onChange={(selectedDate) => setDate(selectedDate)}
+        />
 
         {/* 電卓ボタン */}
         <View style={{ flex: 1, justifyContent: "space-between" }}>

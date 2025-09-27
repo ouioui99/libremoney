@@ -1,15 +1,14 @@
 import React, { useState } from "react";
-import { View, Button, Platform } from "react-native";
+import { View, Text, Platform, TouchableOpacity } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function SettingsScreen() {
-  const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [show, setShow] = useState(false);
 
-  const onChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowPicker(false); // Androidでは必須
-    }
+  const onChange = (_event: any, selectedDate?: Date) => {
+    setShow(false); // カレンダー閉じる
     if (selectedDate) {
       setDate(selectedDate);
     }
@@ -17,12 +16,15 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Button title="Pick a date" onPress={() => setShowPicker(true)} />
-      {showPicker && (
+      <TouchableOpacity onPress={() => setShow(true)}>
+        <Text>日付を選択: {date.toLocaleDateString()}</Text>
+      </TouchableOpacity>
+
+      {show && (
         <DateTimePicker
           value={date}
           mode="date"
-          display="default"
+          display={Platform.OS === "ios" ? "inline" : "default"}
           onChange={onChange}
         />
       )}
