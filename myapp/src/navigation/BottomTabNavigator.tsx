@@ -19,6 +19,8 @@ export default function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        borderTopColor: "red",
+        borderTopWidth: 100,
         tabBarStyle: {
           backgroundColor: themeColors.background, // 👈 colors から取得
         },
