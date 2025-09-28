@@ -7,7 +7,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 
 const buttons = [
-  ["AC", "⌫", "%", "÷"],
+  ["⌫", "AC", "%", "÷"],
   ["7", "8", "9", "×"],
   ["4", "5", "6", "−"],
   ["1", "2", "3", "+"],
@@ -26,38 +26,114 @@ export default function ExpenseScreen() {
   const c = colors[theme];
 
   const handlePress = (val: string) => {
-    if (val === "AC") {
+    // Error状態のときに数字や演算子を押したらリセット
+    if (expression === "Error" && val !== "AC" && val !== "C") {
+      if (/[0-9.]/.test(val)) {
+        // 数字や小数点なら新規入力に切り替え
+        setExpression(val === "." ? "0." : val);
+        return;
+      } else if (["÷", "×", "−", "+", "%", "±"].includes(val)) {
+        // 演算子は無視
+        return;
+      }
+    }
+
+    // AC / C
+    if (val === "AC" || val === "C") {
       setExpression("");
-      setCalculating(false);
-    } else if (val === "⌫") setExpression(expression.slice(0, -1));
-    else if (val === "=") {
+      if (val === "AC") setCalculating(false);
+      return;
+    }
+
+    if (val === "⌫") {
+      setExpression(expression.slice(0, -1));
+    } else if (val === "=") {
       try {
-        if (/÷0/.test(expression)) {
-          throw new Error("0で割ることはできません");
-        }
+        if (/÷0/.test(expression)) throw new Error("0で割ることはできません");
+
         const replaced = expression
           .replace(/÷/g, "/")
           .replace(/×/g, "*")
           .replace(/−/g, "-");
 
         const result = eval(replaced);
-        // 無限大になった場合もエラー扱い
         if (!isFinite(result)) throw new Error("無効な計算");
 
-        setExpression(String(eval(replaced)));
-
+        setExpression(String(result));
         setCalculating(false);
       } catch {
         setExpression("Error");
       }
-    } else if (val === "±")
-      setExpression(
-        expression.startsWith("-") ? expression.slice(1) : "-" + expression
-      );
-    else if (val === "÷" || val === "×" || val === "−" || val === "+") {
-      setExpression(expression + val);
+    } else if (val === "±") {
+      // 最後の数値部分だけ符号反転
+      const parts = expression.split(/÷|×|−|\+/);
+      const lastNumber = parts.pop();
+      if (!lastNumber) return;
+
+      const newLast = lastNumber.startsWith("-")
+        ? lastNumber.slice(1)
+        : "-" + lastNumber;
+      const newExpr = parts.join("") + newLast;
+      setExpression(newExpr);
+    } else if (["÷", "×", "−", "+"].includes(val)) {
+      if (expression === "") return; // 先頭の演算子は無効
+
+      const lastChar = expression.slice(-1);
+      if (["÷", "×", "−", "+"].includes(lastChar)) {
+        // 演算子連続 → 上書き
+        setExpression(expression.slice(0, -1) + val);
+      } else {
+        setExpression(expression + val);
+      }
       setCalculating(true);
-    } else setExpression(expression + val);
+    } else if (val === ".") {
+      const parts = expression.split(/÷|×|−|\+/);
+      const currentNumber = parts[parts.length - 1];
+
+      if (currentNumber.includes(".")) return; // 連続小数点防止
+      if (currentNumber === "")
+        setExpression(expression + "0."); // 空のとき 0. に
+      else setExpression(expression + ".");
+    } else if (val === "0") {
+      const parts = expression.split(/÷|×|−|\+/);
+      const currentNumber = parts[parts.length - 1];
+
+      if (currentNumber === "0") return; // 先頭ゼロ連続防止
+      setExpression(expression + "0");
+    } else if (val === "%") {
+      if (expression === "") return;
+
+      // 最後の演算子を探す
+      const match = expression.match(/.*[÷×−+]/);
+      if (match) {
+        const operatorIndex = match[0].length - 1;
+        const operator = expression[operatorIndex];
+        const left = expression.slice(0, operatorIndex);
+        const right = expression.slice(operatorIndex + 1);
+        if (!right) return;
+
+        const leftVal = parseFloat(left);
+        const rightVal = parseFloat(right);
+
+        let percentExpr = "";
+
+        if (operator === "+" || operator === "−") {
+          percentExpr = String(leftVal * (rightVal / 100));
+        } else if (operator === "×" || operator === "÷") {
+          percentExpr = String(rightVal / 100);
+        }
+
+        const newExpr = expression.slice(0, operatorIndex + 1) + percentExpr;
+        setExpression(newExpr);
+      } else {
+        // 単独の数値の場合
+        const percentValue = String(parseFloat(expression) / 100);
+        setExpression(percentValue);
+      }
+    } else {
+      // 数字やその他文字
+      setExpression(expression + val);
+    }
   };
 
   const handleConfirm = () => {

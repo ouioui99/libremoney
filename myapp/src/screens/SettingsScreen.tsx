@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, Text, Platform, TouchableOpacity, Button } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useTheme } from "../contexts/ThemeContext";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 
