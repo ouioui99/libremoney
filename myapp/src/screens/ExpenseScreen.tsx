@@ -49,9 +49,21 @@ export default function ExpenseScreen() {
       setExpression(expression.slice(0, -1));
     } else if (val === "=") {
       try {
-        if (/÷0/.test(expression)) throw new Error("0で割ることはできません");
+        if (expression === "") return;
 
-        const replaced = expression
+        let exp = expression;
+        const lastChar = exp.slice(-1);
+
+        if (["÷", "×", "−", "+"].includes(lastChar)) {
+          // 最後が演算子なら削除して計算
+          exp = exp.slice(0, -1);
+        }
+
+        if (exp === "") return; // 全部演算子だけだった場合は無視
+
+        if (/÷0/.test(exp)) throw new Error("0で割ることはできません");
+
+        const replaced = exp
           .replace(/÷/g, "/")
           .replace(/×/g, "*")
           .replace(/−/g, "-");
