@@ -1,13 +1,50 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 
 export default function HomeScreen() {
+  const targetSavings = 500000;
+  const remainingDays = 120;
+  const todayUsable = 3500;
   return (
     <SafeAreaLayout>
-      <View>
-        <Text>HomeScreen</Text>
-      </View>
+      {/* 今日使える金額 */}
+      <Text style={styles.label}>今日使える金額</Text>
+      <Text style={styles.mainAmount}>¥{todayUsable.toLocaleString()}</Text>
+
+      {/* 目標貯金額 */}
+      <Text style={styles.subText}>
+        目標貯金額: ¥{targetSavings.toLocaleString()}
+      </Text>
+
+      {/* 残り日数 */}
+      <Text style={styles.subText}>残り日数: {remainingDays}日</Text>
     </SafeAreaLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  label: {
+    fontSize: 18,
+    color: "#555",
+    marginBottom: 8,
+  },
+  mainAmount: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#2e7d32", // 深いグリーン
+    marginBottom: 32,
+  },
+  subText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 6,
+  },
+});
