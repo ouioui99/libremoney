@@ -6,11 +6,14 @@ export default function HomeScreen() {
   const targetSavings = 500000;
   const remainingDays = 120;
   const todayUsable = 3500;
+
   return (
     <SafeAreaLayout>
-      {/* 今日使える金額 */}
-      <Text style={styles.label}>今日使える金額</Text>
-      <Text style={styles.mainAmount}>¥{todayUsable.toLocaleString()}</Text>
+      {/* Card */}
+      <View style={styles.card}>
+        <Text style={styles.label}>今日使える金額</Text>
+        <Text style={styles.mainAmount}>¥{todayUsable.toLocaleString()}</Text>
+      </View>
 
       {/* 目標貯金額 */}
       <Text style={styles.subText}>
@@ -24,12 +27,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  card: {
     backgroundColor: "#fff",
-    justifyContent: "center",
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 32,
+    marginBottom: 24,
     alignItems: "center",
-    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4, // Android用
   },
   label: {
     fontSize: 18,
@@ -39,12 +48,12 @@ const styles = StyleSheet.create({
   mainAmount: {
     fontSize: 48,
     fontWeight: "bold",
-    color: "#2e7d32", // 深いグリーン
-    marginBottom: 32,
+    color: "#2e7d32",
   },
   subText: {
     fontSize: 16,
     color: "#666",
     marginBottom: 6,
+    textAlign: "center",
   },
 });
