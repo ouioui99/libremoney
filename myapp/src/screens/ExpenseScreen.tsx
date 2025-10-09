@@ -1,10 +1,18 @@
-// screens/ExpenseScreen.tsx
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  FlatList,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import CalendarModal from "../components/CalenderModal";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
+import { Ionicons } from "@expo/vector-icons";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -14,6 +22,15 @@ const buttons = [
   ["±", "0", ".", "="],
 ];
 
+const categories = [
+  { id: "1", name: "食費", icon: "fast-food-outline" },
+  { id: "2", name: "交通", icon: "bus-outline" },
+  { id: "3", name: "日用品", icon: "cart-outline" },
+  { id: "4", name: "光熱費", icon: "flash-outline" },
+  { id: "5", name: "娯楽", icon: "game-controller-outline" },
+  { id: "6", name: "その他", icon: "ellipsis-horizontal-outline" },
+];
+
 const displayConfirmBtn = "登録";
 
 export default function ExpenseScreen() {
@@ -21,24 +38,38 @@ export default function ExpenseScreen() {
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [expenses, setExpenses] = useState<
+    { amount: number; date: string; category: string }[]
+  >([]);
+  const [category, setCategory] = useState<string>("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
 
+  // 起動時に過去の支出を読み込み
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem("expenses");
+        if (stored) setExpenses(JSON.parse(stored));
+      } catch (e) {
+        console.error("支出データ読み込みエラー:", e);
+      }
+    })();
+  }, []);
+
+  // 電卓ボタン押下処理
   const handlePress = (val: string) => {
-    // Error状態のときに数字や演算子を押したらリセット
     if (expression === "Error" && val !== "AC" && val !== "C") {
       if (/[0-9.]/.test(val)) {
-        // 数字や小数点なら新規入力に切り替え
         setExpression(val === "." ? "0." : val);
         return;
       } else if (["÷", "×", "−", "+", "%", "±"].includes(val)) {
-        // 演算子は無視
         return;
       }
     }
 
-    // AC / C
     if (val === "AC" || val === "C") {
       setExpression("");
       if (val === "AC") setCalculating(false);
@@ -50,24 +81,16 @@ export default function ExpenseScreen() {
     } else if (val === "=") {
       try {
         if (expression === "") return;
-
         let exp = expression;
         const lastChar = exp.slice(-1);
-
-        if (["÷", "×", "−", "+"].includes(lastChar)) {
-          // 最後が演算子なら削除して計算
-          exp = exp.slice(0, -1);
-        }
-
-        if (exp === "") return; // 全部演算子だけだった場合は無視
-
+        if (["÷", "×", "−", "+"].includes(lastChar)) exp = exp.slice(0, -1);
+        if (exp === "") return;
         if (/÷0/.test(exp)) throw new Error("0で割ることはできません");
 
         const replaced = exp
           .replace(/÷/g, "/")
           .replace(/×/g, "*")
           .replace(/−/g, "-");
-
         const result = eval(replaced);
         if (!isFinite(result)) throw new Error("無効な計算");
 
@@ -77,22 +100,18 @@ export default function ExpenseScreen() {
         setExpression("Error");
       }
     } else if (val === "±") {
-      // 最後の数値部分だけ符号反転
       const parts = expression.split(/÷|×|−|\+/);
       const lastNumber = parts.pop();
       if (!lastNumber) return;
-
       const newLast = lastNumber.startsWith("-")
         ? lastNumber.slice(1)
         : "-" + lastNumber;
       const newExpr = parts.join("") + newLast;
       setExpression(newExpr);
     } else if (["÷", "×", "−", "+"].includes(val)) {
-      if (expression === "") return; // 先頭の演算子は無効
-
+      if (expression === "") return;
       const lastChar = expression.slice(-1);
       if (["÷", "×", "−", "+"].includes(lastChar)) {
-        // 演算子連続 → 上書き
         setExpression(expression.slice(0, -1) + val);
       } else {
         setExpression(expression + val);
@@ -101,21 +120,16 @@ export default function ExpenseScreen() {
     } else if (val === ".") {
       const parts = expression.split(/÷|×|−|\+/);
       const currentNumber = parts[parts.length - 1];
-
-      if (currentNumber.includes(".")) return; // 連続小数点防止
-      if (currentNumber === "")
-        setExpression(expression + "0."); // 空のとき 0. に
+      if (currentNumber.includes(".")) return;
+      if (currentNumber === "") setExpression(expression + "0.");
       else setExpression(expression + ".");
     } else if (val === "0") {
       const parts = expression.split(/÷|×|−|\+/);
       const currentNumber = parts[parts.length - 1];
-
-      if (currentNumber === "0") return; // 先頭ゼロ連続防止
+      if (currentNumber === "0") return;
       setExpression(expression + "0");
     } else if (val === "%") {
       if (expression === "") return;
-
-      // 最後の演算子を探す
       const match = expression.match(/.*[÷×−+]/);
       if (match) {
         const operatorIndex = match[0].length - 1;
@@ -123,67 +137,119 @@ export default function ExpenseScreen() {
         const left = expression.slice(0, operatorIndex);
         const right = expression.slice(operatorIndex + 1);
         if (!right) return;
-
         const leftVal = parseFloat(left);
         const rightVal = parseFloat(right);
-
         let percentExpr = "";
-
         if (operator === "+" || operator === "−") {
           percentExpr = String(leftVal * (rightVal / 100));
         } else if (operator === "×" || operator === "÷") {
           percentExpr = String(rightVal / 100);
         }
-
         const newExpr = expression.slice(0, operatorIndex + 1) + percentExpr;
         setExpression(newExpr);
       } else {
-        // 単独の数値の場合
         const percentValue = String(parseFloat(expression) / 100);
         setExpression(percentValue);
       }
     } else {
-      // 数字やその他文字
       setExpression(expression + val);
     }
   };
 
-  const handleConfirm = () => {
-    // 確定押下時の処理（例: DB 登録など）
-    console.log("金額確定:", expression, "日付:", date.toLocaleDateString());
-    setCalculating(false);
-    setExpression(""); // 必要に応じてリセット
+  // 登録ボタン押下時の保存処理
+  const handleConfirm = async () => {
+    try {
+      const amount = parseFloat(expression);
+      if (isNaN(amount)) {
+        Alert.alert("エラー", "正しい金額を入力してください");
+        return;
+      }
+
+      const newExpense = {
+        amount,
+        date: date.toISOString(),
+        category: category,
+      };
+
+      const newExpenses = [...expenses, newExpense];
+      setExpenses(newExpenses);
+      await AsyncStorage.setItem("expenses", JSON.stringify(newExpenses));
+
+      Alert.alert("保存完了", `${category}に支出を保存しました`);
+      console.log("保存データ:", newExpenses);
+
+      setExpression("");
+      setCalculating(false);
+    } catch (error) {
+      console.error("保存エラー:", error);
+      Alert.alert("エラー", "保存に失敗しました");
+    }
   };
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
       <View style={{ flex: 1, padding: 20 }}>
-        {/* 上部：金額表示＋日付選択 */}
-        <View style={{ flex: 2, justifyContent: "flex-end" }}>
+        {/* 上部：金額表示＋日付選択＋カテゴリー選択 */}
+        <View style={{ flex: 1.8, justifyContent: "flex-end" }}>
           <Text
             style={{
               color: c.text,
               fontSize: 40,
               textAlign: "right",
-              marginBottom: 20,
+              marginBottom: 5,
             }}
           >
             {expression || "0"}
           </Text>
 
-          <View style={{ marginBottom: 50 }}>
-            <TouchableOpacity
-              style={{
-                backgroundColor: c.secondary,
-                padding: 15,
-                borderRadius: 8,
-              }}
-              onPress={() => setShowPicker(true)}
-            >
-              <Text style={{ color: c.text, fontSize: 18 }}>
-                {date.toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
+          {/* カテゴリー選択＋日付選択を横並びに */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 10,
+              marginBottom: 30,
+            }}
+          >
+            {/* カテゴリー選択 */}
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: c.secondary,
+                  padding: 15,
+                  borderRadius: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onPress={() => setShowPicker(true)}
+              >
+                <Text style={{ color: c.text, fontSize: 18 }}>
+                  {date.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 日付選択 */}
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                onPress={() => setShowCategoryModal(true)}
+                style={{
+                  backgroundColor: c.secondary,
+                  padding: 15,
+                  borderRadius: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ color: c.text, fontSize: 18 }}>
+                  {category || "カテゴリーを選択"}
+                </Text>
+                <Ionicons name="chevron-down" size={22} color={c.text} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <CalendarModal
@@ -194,6 +260,96 @@ export default function ExpenseScreen() {
           />
         </View>
 
+        {/* カテゴリーモーダル */}
+        <Modal
+          visible={showCategoryModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowCategoryModal(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.3)",
+              justifyContent: "flex-end",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: c.background,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                paddingVertical: 20,
+                paddingHorizontal: 15,
+                maxHeight: "60%",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  color: c.text,
+                  textAlign: "center",
+                  marginBottom: 15,
+                  fontWeight: "600",
+                }}
+              >
+                カテゴリーを選択
+              </Text>
+              <FlatList
+                data={categories}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setCategory(item.name);
+                      setShowCategoryModal(false);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      paddingVertical: 12,
+                      paddingHorizontal: 10,
+                      borderBottomWidth: 1,
+                      borderBottomColor: c.border || "#ccc",
+                    }}
+                  >
+                    <Ionicons
+                      name={item.icon}
+                      size={24}
+                      color={c.text}
+                      style={{ marginRight: 10 }}
+                    />
+                    <Text style={{ color: c.text, fontSize: 18 }}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+
+              <TouchableOpacity
+                onPress={() => setShowCategoryModal(false)}
+                style={{
+                  marginTop: 15,
+                  paddingVertical: 12,
+                  backgroundColor: c.accent,
+                  borderRadius: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    textAlign: "center",
+                    fontSize: 16,
+                    fontWeight: "600",
+                  }}
+                >
+                  閉じる
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
         {/* 下部：電卓ボタン */}
         <View style={{ flex: 3, justifyContent: "flex-end" }}>
           {buttons.map((row, rowIndex) => (
@@ -203,7 +359,6 @@ export default function ExpenseScreen() {
             >
               {row.map((btn) => {
                 const isLastEqualBtn = btn === "=";
-
                 const displayBtn =
                   isLastEqualBtn && !calculating ? displayConfirmBtn : btn;
 
@@ -219,17 +374,14 @@ export default function ExpenseScreen() {
                         displayBtn === displayConfirmBtn
                           ? c.operator
                           : ["÷", "×", "−", "+", "="].includes(btn)
-                          ? c.accent // 演算子ボタン
-                          : c.secondary, // 数字ボタン
+                          ? c.accent
+                          : c.secondary,
                       justifyContent: "center",
                       alignItems: "center",
                     }}
                     onPress={() => {
-                      if (displayBtn === displayConfirmBtn) {
-                        handleConfirm();
-                      } else {
-                        handlePress(displayBtn);
-                      }
+                      if (displayBtn === displayConfirmBtn) handleConfirm();
+                      else handlePress(displayBtn);
                     }}
                   >
                     <Text style={{ color: c.text, fontSize: 24 }}>
