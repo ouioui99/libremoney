@@ -19,14 +19,19 @@ interface Category {
 interface Props {
   visible: boolean;
   onClose: () => void;
+  showCategoryEditModal: boolean;
+  setShowCategoryEditModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function CategoryListModal({ visible, onClose }: Props) {
+export default function CategoryListModal({
+  visible,
+  onClose,
+  showCategoryEditModal,
+  setShowCategoryEditModal,
+}: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
   const insets = useSafeAreaInsets();
-
-  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([
     { id: "1", name: "食費" },
@@ -181,15 +186,15 @@ export default function CategoryListModal({ visible, onClose }: Props) {
           >
             <Text style={{ color: c.text, fontSize: 16 }}>カテゴリー追加</Text>
           </TouchableOpacity>
+          <CategoryEditModal
+            visible={showCategoryEditModal}
+            onClose={() => setShowCategoryEditModal(false)}
+            onSave={function (category: { icon: string; name: string }): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
         </View>
       </SafeAreaLayout>
-      <CategoryEditModal
-        visible={showCategoryEditModal}
-        onClose={() => setShowCategoryEditModal(false)}
-        onSave={function (category: { icon: string; name: string }): void {
-          throw new Error("Function not implemented.");
-        }}
-      />
     </Modal>
   );
 }

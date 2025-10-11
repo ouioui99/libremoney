@@ -29,7 +29,7 @@ interface CategoryModalProps {
   initialCategory?: { icon: string; name: string };
 }
 
-const CategoryModal: React.FC<CategoryModalProps> = ({
+const CategoryEditModal: React.FC<CategoryModalProps> = ({
   visible,
   onClose,
   onSave,
@@ -59,7 +59,12 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      presentationStyle="overFullScreen"
+    >
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={"padding"}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View
@@ -146,7 +151,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   );
 };
 
-export default CategoryModal;
+export default CategoryEditModal;
 
 const styles = StyleSheet.create({
   overlay: {

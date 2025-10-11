@@ -51,6 +51,7 @@ export default function ExpenseScreen() {
   const [category, setCategory] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
+  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
@@ -276,13 +277,15 @@ export default function ExpenseScreen() {
           onClose={() => setShowCategoryModal(false)}
           onSelect={(name) => setCategory(name)}
           onEdit={() => {
-            setShowCategoryListModal(true);
             setShowCategoryModal(false);
+            setShowCategoryListModal(true);
           }}
         />
         <CategoryListModal
           visible={showCategoryListModal}
           onClose={() => setShowCategoryListModal(false)}
+          showCategoryEditModal={showCategoryEditModal}
+          setShowCategoryEditModal={setShowCategoryEditModal}
         />
 
         {/* 下部：電卓ボタン */}
