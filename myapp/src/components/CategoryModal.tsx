@@ -137,7 +137,7 @@ export default function CategoryModal({
             >
               <Text
                 style={{
-                  color: "#fff",
+                  color: c.text,
                   textAlign: "center",
                   fontSize: 16,
                   fontWeight: "600",

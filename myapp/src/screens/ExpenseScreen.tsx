@@ -14,6 +14,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import CategoryModal from "../components/CategoryModal";
+import CategoryListModal from "../components/CategoryListModal";
 import CategoryEditModal from "../components/CategoryEditModal";
 
 const buttons = [
@@ -49,7 +50,7 @@ export default function ExpenseScreen() {
   >([]);
   const [category, setCategory] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
+  const [showCategoryListModal, setShowCategoryListModal] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
@@ -275,13 +276,13 @@ export default function ExpenseScreen() {
           onClose={() => setShowCategoryModal(false)}
           onSelect={(name) => setCategory(name)}
           onEdit={() => {
-            setShowCategoryEditModal(true);
+            setShowCategoryListModal(true);
             setShowCategoryModal(false);
           }}
         />
-        <CategoryEditModal
-          visible={showCategoryEditModal}
-          onClose={() => setShowCategoryEditModal(false)}
+        <CategoryListModal
+          visible={showCategoryListModal}
+          onClose={() => setShowCategoryListModal(false)}
         />
 
         {/* 下部：電卓ボタン */}
