@@ -13,6 +13,8 @@ import CalendarModal from "../components/CalenderModal";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import { Ionicons } from "@expo/vector-icons";
+import CategoryModal from "../components/CategoryModal";
+import CategoryEditModal from "../components/CategoryEditModal";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -22,7 +24,11 @@ const buttons = [
   ["±", "0", ".", "="],
 ];
 
-const categories = [
+const categories: {
+  id: string;
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
   { id: "1", name: "食費", icon: "fast-food-outline" },
   { id: "2", name: "交通", icon: "bus-outline" },
   { id: "3", name: "日用品", icon: "cart-outline" },
@@ -43,6 +49,7 @@ export default function ExpenseScreen() {
   >([]);
   const [category, setCategory] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
@@ -78,6 +85,7 @@ export default function ExpenseScreen() {
 
     if (val === "⌫") {
       setExpression(expression.slice(0, -1));
+      if (expression.slice(0, -1) === "") setCalculating(false);
     } else if (val === "=") {
       try {
         if (expression === "") return;
@@ -261,94 +269,20 @@ export default function ExpenseScreen() {
         </View>
 
         {/* カテゴリーモーダル */}
-        <Modal
+        <CategoryModal
           visible={showCategoryModal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowCategoryModal(false)}
-        >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(0,0,0,0.3)",
-              justifyContent: "flex-end",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: c.background,
-                borderTopLeftRadius: 20,
-                borderTopRightRadius: 20,
-                paddingVertical: 20,
-                paddingHorizontal: 15,
-                maxHeight: "60%",
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 18,
-                  color: c.text,
-                  textAlign: "center",
-                  marginBottom: 15,
-                  fontWeight: "600",
-                }}
-              >
-                カテゴリーを選択
-              </Text>
-              <FlatList
-                data={categories}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setCategory(item.name);
-                      setShowCategoryModal(false);
-                    }}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      paddingVertical: 12,
-                      paddingHorizontal: 10,
-                      borderBottomWidth: 1,
-                      borderBottomColor: c.border || "#ccc",
-                    }}
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={24}
-                      color={c.text}
-                      style={{ marginRight: 10 }}
-                    />
-                    <Text style={{ color: c.text, fontSize: 18 }}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              />
-
-              <TouchableOpacity
-                onPress={() => setShowCategoryModal(false)}
-                style={{
-                  marginTop: 15,
-                  paddingVertical: 12,
-                  backgroundColor: c.accent,
-                  borderRadius: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#fff",
-                    textAlign: "center",
-                    fontSize: 16,
-                    fontWeight: "600",
-                  }}
-                >
-                  閉じる
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+          categories={categories}
+          onClose={() => setShowCategoryModal(false)}
+          onSelect={(name) => setCategory(name)}
+          onEdit={() => {
+            setShowCategoryEditModal(true);
+            setShowCategoryModal(false);
+          }}
+        />
+        <CategoryEditModal
+          visible={showCategoryEditModal}
+          onClose={() => setShowCategoryEditModal(false)}
+        />
 
         {/* 下部：電卓ボタン */}
         <View style={{ flex: 3, justifyContent: "flex-end" }}>
