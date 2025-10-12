@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DraggableFlatList, {
@@ -10,51 +10,32 @@ import { colors } from "../theme/colors";
 import SafeAreaLayout from "./SafeAreaLayout";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CategoryEditModal from "./CategoryEditModal";
-
-interface Category {
-  id: string;
-  name: string;
-}
+import { Category } from "../types/models";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
+  categories: Category[];
+  onDelete: (id: string) => void;
+  onReorder: (newCategories: Category[]) => void;
   showCategoryEditModal: boolean;
   setShowCategoryEditModal: React.Dispatch<React.SetStateAction<boolean>>;
+  handleCategoryEditOnsave: (category: { icon: string; name: string }) => void;
 }
 
 export default function CategoryListModal({
   visible,
   onClose,
+  categories,
+  onDelete,
+  onReorder,
   showCategoryEditModal,
   setShowCategoryEditModal,
+  handleCategoryEditOnsave,
 }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
   const insets = useSafeAreaInsets();
-
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "1", name: "食費" },
-    { id: "2", name: "外食費" },
-    { id: "3", name: "日用品" },
-    { id: "4", name: "交通費" },
-    { id: "5", name: "衣服" },
-    { id: "6", name: "交際費" },
-    { id: "7", name: "趣味" },
-    { id: "8", name: "その他" },
-  ]);
-
-  const handleDelete = (id: string) => {
-    setCategories((prev) => prev.filter((cat) => cat.id !== id));
-  };
-
-  const handleAdd = () => {
-    const newName = `新しいカテゴリ${categories.length + 1}`;
-    setCategories((prev) => [
-      ...prev,
-      { id: String(Date.now()), name: newName },
-    ]);
-  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -103,8 +84,16 @@ export default function CategoryListModal({
           <DraggableFlatList
             style={{ marginTop: 10, marginBottom: 55 }}
             data={categories}
+            // 固定の一意キーに id を使う（order は可変なので避ける）
             keyExtractor={(item) => item.id}
-            onDragEnd={({ data }) => setCategories(data)}
+            onDragEnd={({ data }) => {
+              // 並び替え後に order を振り直して親に渡す（親はこれを保存して state 更新する）
+              const updated = data.map((item, idx) => ({
+                ...item,
+                order: String(idx + 1),
+              }));
+              onReorder(updated);
+            }}
             renderItem={({ item, drag, isActive }) => (
               <ScaleDecorator>
                 <TouchableOpacity
@@ -132,7 +121,7 @@ export default function CategoryListModal({
                 >
                   {/* 左：削除ボタン */}
                   <TouchableOpacity
-                    onPress={() => handleDelete(item.id)}
+                    onPress={() => onDelete(item.id)}
                     style={{ marginRight: 12, padding: 4 }}
                   >
                     <Ionicons name="remove-circle" size={22} color={c.error} />
@@ -140,7 +129,7 @@ export default function CategoryListModal({
 
                   {/* 左：カテゴリーアイコン */}
                   <Ionicons
-                    name="folder-outline" // ← 好みで変更可能
+                    name={item.icon}
                     size={20}
                     color={c.placeholder}
                     style={{ marginRight: 10 }}
@@ -189,9 +178,7 @@ export default function CategoryListModal({
           <CategoryEditModal
             visible={showCategoryEditModal}
             onClose={() => setShowCategoryEditModal(false)}
-            onSave={function (category: { icon: string; name: string }): void {
-              throw new Error("Function not implemented.");
-            }}
+            onSave={handleCategoryEditOnsave}
           />
         </View>
       </SafeAreaLayout>

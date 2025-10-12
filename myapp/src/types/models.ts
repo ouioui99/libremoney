@@ -1,0 +1,17 @@
+import { Ionicons } from "@expo/vector-icons";
+
+export type IconName = keyof typeof Ionicons.glyphMap;
+
+export interface Category {
+  id: string;
+  order: string;
+  name: string;
+  icon: IconName;
+}
+
+export interface Expense {
+  id: string;
+  amount: number;
+  date: string; // ISO文字列
+  category: string; // Categoryのidを参照
+}

@@ -38,9 +38,7 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const [selectedIcon, setSelectedIcon] = useState(
-    initialCategory?.icon ?? "add-outline"
-  );
+  const [selectedIcon, setSelectedIcon] = useState(initialCategory?.icon ?? "");
   const [name, setName] = useState(initialCategory?.name ?? "");
   const [search, setSearch] = useState("");
 
@@ -54,7 +52,6 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
     onSave({ icon: selectedIcon, name: name.trim() });
     setName("");
     setSearch("");
-    setSelectedIcon("add-outline");
     onClose();
   };
 

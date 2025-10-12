@@ -16,6 +16,15 @@ import { Ionicons } from "@expo/vector-icons";
 import CategoryModal from "../components/CategoryModal";
 import CategoryListModal from "../components/CategoryListModal";
 import CategoryEditModal from "../components/CategoryEditModal";
+import {
+  addItemToStorage,
+  getItemsFromStorage,
+  getNextId,
+  removeItemFromStorage,
+} from "../util/storageUtils";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { STORAGE_KEYS } from "../util/constant";
+import { Category, Expense } from "../types/models";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -45,10 +54,9 @@ export default function ExpenseScreen() {
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [calculating, setCalculating] = useState(false);
-  const [expenses, setExpenses] = useState<
-    { amount: number; date: string; category: string }[]
-  >([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [category, setCategory] = useState<string>("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
@@ -60,8 +68,21 @@ export default function ExpenseScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem("expenses");
-        if (stored) setExpenses(JSON.parse(stored));
+        const storedExpenses = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.EXPENSES
+        );
+        setExpenses(storedExpenses);
+
+        const storedCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.CATEGORIES
+        );
+        // order プロパティでソートして state にセット
+        const sorted = storedCategories.slice().sort((a, b) => {
+          const ao = Number(a.order ?? a.id ?? 0);
+          const bo = Number(b.order ?? b.id ?? 0);
+          return ao - bo;
+        });
+        setCategories(sorted);
       } catch (e) {
         console.error("支出データ読み込みエラー:", e);
       }
@@ -170,20 +191,25 @@ export default function ExpenseScreen() {
   const handleConfirm = async () => {
     try {
       const amount = parseFloat(expression);
+      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
       if (isNaN(amount)) {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
 
       const newExpense = {
+        id: newId,
         amount,
         date: date.toISOString(),
         category: category,
       };
+      const newExpenses = await addItemToStorage(
+        STORAGE_KEYS.EXPENSES,
+        expenses,
+        newExpense
+      );
 
-      const newExpenses = [...expenses, newExpense];
       setExpenses(newExpenses);
-      await AsyncStorage.setItem("expenses", JSON.stringify(newExpenses));
 
       Alert.alert("保存完了", `${category}に支出を保存しました`);
       console.log("保存データ:", newExpenses);
@@ -193,6 +219,76 @@ export default function ExpenseScreen() {
     } catch (error) {
       console.error("保存エラー:", error);
       Alert.alert("エラー", "保存に失敗しました");
+    }
+  };
+
+  const handleCategoryEditOnSave = async (category: {
+    icon: string;
+    name: string;
+  }) => {
+    const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
+
+    const newCategory = {
+      id: newId,
+      // 末尾に追加するので現在の件数＋1 を order にする
+      order: String((categories?.length ?? 0) + 1),
+      icon: category.icon as keyof typeof Ionicons.glyphMap,
+      name: category.name,
+    };
+
+    const newCategories = await addItemToStorage(
+      STORAGE_KEYS.CATEGORIES,
+      categories,
+      newCategory
+    );
+    setCategories(newCategories);
+  };
+
+  // 親で削除を処理（ストレージと state を更新）
+  const handleCategoryDelete = (id: string) => {
+    Alert.alert(
+      "確認",
+      "このカテゴリを削除しますか？",
+      [
+        {
+          text: "キャンセル",
+          style: "cancel",
+        },
+        {
+          text: "削除",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const updated = await removeItemFromStorage<Category>(
+                STORAGE_KEYS.CATEGORIES,
+                (item) => item.id === id
+              );
+              setCategories(updated);
+            } catch (e) {
+              console.error("カテゴリ削除エラー:", e);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // 並び替えを親で受けて保存
+  const handleCategoryReorder = async (newList: Category[]) => {
+    try {
+      // 各要素に order を振り直す（1始まり）
+      const updated = newList.map((cat, idx) => ({
+        ...cat,
+        order: String(idx + 1),
+      }));
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.CATEGORIES,
+        JSON.stringify(updated)
+      );
+      setCategories(updated);
+    } catch (e) {
+      console.error("カテゴリ並び替え保存エラー:", e);
     }
   };
 
@@ -283,9 +379,13 @@ export default function ExpenseScreen() {
         />
         <CategoryListModal
           visible={showCategoryListModal}
+          categories={categories}
           onClose={() => setShowCategoryListModal(false)}
+          onDelete={handleCategoryDelete}
+          onReorder={handleCategoryReorder}
           showCategoryEditModal={showCategoryEditModal}
           setShowCategoryEditModal={setShowCategoryEditModal}
+          handleCategoryEditOnsave={handleCategoryEditOnSave}
         />
 
         {/* 下部：電卓ボタン */}
