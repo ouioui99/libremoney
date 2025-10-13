@@ -1,5 +1,5 @@
 // components/CategoryModal.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
+import { Category, NewCategoryInput } from "../types/models";
 
 // Ionicons の全アイコン名を取得
 const allIoniconNames = Object.keys(Ionicons.glyphMap);
@@ -25,8 +26,8 @@ const outlineIcons = allIoniconNames.filter((name) =>
 interface CategoryModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (category: { icon: string; name: string }) => void;
-  initialCategory?: { icon: string; name: string };
+  onSave: (category: NewCategoryInput | Category) => void;
+  initialCategory?: Category;
 }
 
 const CategoryEditModal: React.FC<CategoryModalProps> = ({
@@ -38,9 +39,19 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const [selectedIcon, setSelectedIcon] = useState(initialCategory?.icon ?? "");
-  const [name, setName] = useState(initialCategory?.name ?? "");
+  const [selectedIcon, setSelectedIcon] = useState("");
+  const [name, setName] = useState("");
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedIcon(initialCategory.icon);
+      setName(initialCategory.name);
+    } else {
+      setSelectedIcon("");
+      setName("");
+    }
+  }, [initialCategory]);
 
   // 検索機能
   const filteredIcons = useMemo(() => {
@@ -49,9 +60,20 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
 
   const handleSave = () => {
     if (!name.trim()) return;
-    onSave({ icon: selectedIcon, name: name.trim() });
+    if (initialCategory) {
+      onSave({ ...initialCategory, icon: selectedIcon, name: name.trim() });
+    } else {
+      onSave({ icon: selectedIcon, name: name.trim() });
+    }
     setName("");
+    setSelectedIcon("");
     setSearch("");
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setName("");
+    setSelectedIcon("");
     onClose();
   };
 
@@ -124,7 +146,7 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
               {/* ボタン */}
               <View style={styles.buttonRow}>
                 <TouchableOpacity
-                  onPress={onClose}
+                  onPress={handleCancel}
                   style={[styles.button, { backgroundColor: c.secondary }]}
                 >
                   <Text style={[styles.buttonText, { color: c.text }]}>

@@ -18,13 +18,14 @@ import CategoryListModal from "../components/CategoryListModal";
 import CategoryEditModal from "../components/CategoryEditModal";
 import {
   addItemToStorage,
+  editItemInStorage,
   getItemsFromStorage,
   getNextId,
   removeItemFromStorage,
 } from "../util/storageUtils";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { STORAGE_KEYS } from "../util/constant";
-import { Category, Expense } from "../types/models";
+import { Category, Expense, NewCategoryInput } from "../types/models";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -33,6 +34,11 @@ const buttons = [
   ["1", "2", "3", "+"],
   ["±", "0", ".", "="],
 ];
+
+// 型ガード関数
+const isCategory = (v: NewCategoryInput | Category): v is Category => {
+  return (v as Category).id !== undefined && (v as Category).id !== "";
+};
 
 const categories: {
   id: string;
@@ -222,26 +228,55 @@ export default function ExpenseScreen() {
     }
   };
 
-  const handleCategoryEditOnSave = async (category: {
-    icon: string;
-    name: string;
-  }) => {
-    const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
+  const handleCategoryEditOnSave = async (
+    category: NewCategoryInput | Category
+  ) => {
+    // 編集 or 追加を判定して保存処理
+    // category が Category 型なら編集、NewCategoryInput 型なら新規追加
+    if (isCategory(category)) {
+      // 編集
+      try {
+        const id = category.id;
 
-    const newCategory = {
-      id: newId,
-      // 末尾に追加するので現在の件数＋1 を order にする
-      order: String((categories?.length ?? 0) + 1),
-      icon: category.icon as keyof typeof Ionicons.glyphMap,
-      name: category.name,
-    };
+        const newCategory = {
+          id: id,
+          name: category.name,
+          icon: category.icon as keyof typeof Ionicons.glyphMap,
+          order: category.order,
+        };
 
-    const newCategories = await addItemToStorage(
-      STORAGE_KEYS.CATEGORIES,
-      categories,
-      newCategory
-    );
-    setCategories(newCategories);
+        const updatedCategories = await editItemInStorage<Category>(
+          STORAGE_KEYS.CATEGORIES,
+          (item) => item.id === id,
+          categories,
+          newCategory as unknown as Category
+        );
+
+        setCategories(updatedCategories);
+      } catch (e) {
+        console.error("カテゴリ編集保存エラー:", e);
+      }
+      return;
+    } else {
+      // 新規追加
+      const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
+
+      const newCategory = {
+        id: newId,
+        // 末尾に追加するので現在の件数＋1 を order にする
+        order: String((categories?.length ?? 0) + 1),
+        icon: category.icon as keyof typeof Ionicons.glyphMap,
+        name: category.name,
+      };
+
+      const newCategories = await addItemToStorage(
+        STORAGE_KEYS.CATEGORIES,
+        categories,
+        newCategory
+      );
+
+      setCategories(newCategories);
+    }
   };
 
   // 親で削除を処理（ストレージと state を更新）

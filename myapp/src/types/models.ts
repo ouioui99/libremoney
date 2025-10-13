@@ -9,6 +9,11 @@ export interface Category {
   icon: IconName;
 }
 
+export interface NewCategoryInput {
+  name: string;
+  icon: string;
+}
+
 export interface Expense {
   id: string;
   amount: number;

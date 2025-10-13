@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DraggableFlatList, {
@@ -10,7 +10,7 @@ import { colors } from "../theme/colors";
 import SafeAreaLayout from "./SafeAreaLayout";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CategoryEditModal from "./CategoryEditModal";
-import { Category } from "../types/models";
+import { Category, NewCategoryInput } from "../types/models";
 
 interface Props {
   visible: boolean;
@@ -20,7 +20,7 @@ interface Props {
   onReorder: (newCategories: Category[]) => void;
   showCategoryEditModal: boolean;
   setShowCategoryEditModal: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCategoryEditOnsave: (category: { icon: string; name: string }) => void;
+  handleCategoryEditOnsave: (category: NewCategoryInput | Category) => void;
 }
 
 export default function CategoryListModal({
@@ -36,6 +36,14 @@ export default function CategoryListModal({
   const { theme } = useTheme();
   const c = colors[theme];
   const insets = useSafeAreaInsets();
+
+  // 🟩 編集対象カテゴリを保持
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  const handleCategoryPress = (category: Category) => {
+    setEditingCategory(category);
+    setShowCategoryEditModal(true);
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -55,39 +63,18 @@ export default function CategoryListModal({
             <TouchableOpacity onPress={onClose}>
               <Text style={{ color: "#fff", fontSize: 16 }}>閉じる</Text>
             </TouchableOpacity>
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: 18,
-                fontWeight: "bold",
-              }}
-            >
+            <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
               カテゴリー編集
             </Text>
             <View style={{ width: 50 }} />
           </View>
 
-          {/* ヒント */}
-          {/* <View
-            style={{
-              backgroundColor: c.secondary,
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <Text style={{ color: c.text, fontSize: 12 }}>↓ 削除ボタン</Text>
-          </View> */}
-
-          {/* ドラッグ可能なリスト */}
+          {/* リスト */}
           <DraggableFlatList
             style={{ marginTop: 10, marginBottom: 55 }}
             data={categories}
-            // 固定の一意キーに id を使う（order は可変なので避ける）
             keyExtractor={(item) => item.id}
             onDragEnd={({ data }) => {
-              // 並び替え後に order を振り直して親に渡す（親はこれを保存して state 更新する）
               const updated = data.map((item, idx) => ({
                 ...item,
                 order: String(idx + 1),
@@ -97,16 +84,15 @@ export default function CategoryListModal({
             renderItem={({ item, drag, isActive }) => (
               <ScaleDecorator>
                 <TouchableOpacity
-                  activeOpacity={0.5}
+                  activeOpacity={0.7}
                   onLongPress={async () => {
                     await Haptics.impactAsync(
                       Haptics.ImpactFeedbackStyle.Medium
                     );
                     drag();
                   }}
-                  onPress={(item) => {
-                    console.log(item.target);
-                  }}
+                  // 🟩 通常タップで編集モーダル表示
+                  onPress={() => handleCategoryPress(item)}
                   disabled={isActive}
                   style={{
                     flexDirection: "row",
@@ -127,7 +113,7 @@ export default function CategoryListModal({
                     <Ionicons name="remove-circle" size={22} color={c.error} />
                   </TouchableOpacity>
 
-                  {/* 左：カテゴリーアイコン */}
+                  {/* アイコン */}
                   <Ionicons
                     name={item.icon}
                     size={20}
@@ -135,18 +121,12 @@ export default function CategoryListModal({
                     style={{ marginRight: 10 }}
                   />
 
-                  {/* 中央：カテゴリ名 */}
-                  <Text
-                    style={{
-                      flex: 1,
-                      color: c.text,
-                      fontSize: 16,
-                    }}
-                  >
+                  {/* カテゴリ名 */}
+                  <Text style={{ flex: 1, color: c.text, fontSize: 16 }}>
                     {item.name}
                   </Text>
 
-                  {/* 右：ドラッグハンドル */}
+                  {/* ドラッグハンドル */}
                   <Ionicons
                     name="reorder-three-outline"
                     size={24}
@@ -156,29 +136,37 @@ export default function CategoryListModal({
                 </TouchableOpacity>
               </ScaleDecorator>
             )}
-            contentContainerStyle={{
-              paddingBottom: 100, // ボタン分の余白
-            }}
           />
 
-          {/* ✅ 画面下固定の「カテゴリー追加」ボタン */}
+          {/* 追加ボタン */}
           <TouchableOpacity
-            onPress={() => setShowCategoryEditModal(true)}
+            onPress={() => {
+              setEditingCategory(null); // 🟩 新規モード
+              setShowCategoryEditModal(true);
+            }}
             style={[
               styles.fixedAddButton,
               {
                 backgroundColor: c.secondary,
                 borderTopColor: c.border,
-                bottom: insets.bottom, // SafeArea対応
+                bottom: insets.bottom,
               },
             ]}
           >
             <Text style={{ color: c.text, fontSize: 16 }}>カテゴリー追加</Text>
           </TouchableOpacity>
+
+          {/* 編集モーダル */}
           <CategoryEditModal
             visible={showCategoryEditModal}
             onClose={() => setShowCategoryEditModal(false)}
-            onSave={handleCategoryEditOnsave}
+            onSave={(category) => {
+              handleCategoryEditOnsave(category);
+              setShowCategoryEditModal(false);
+              setEditingCategory(null);
+            }}
+            // 🟩 編集時は初期値を渡す
+            initialCategory={editingCategory ? editingCategory : undefined}
           />
         </View>
       </SafeAreaLayout>
