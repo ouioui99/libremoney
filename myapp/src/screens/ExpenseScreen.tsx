@@ -57,7 +57,7 @@ const displayConfirmBtn = "登録";
 
 export default function ExpenseScreen() {
   const [expression, setExpression] = useState("");
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [showPicker, setShowPicker] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -202,11 +202,10 @@ export default function ExpenseScreen() {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
-
       const newExpense = {
         id: newId,
         amount,
-        date: date.toISOString(),
+        date: date,
         category: category,
       };
       const newExpenses = await addItemToStorage(
@@ -366,9 +365,7 @@ export default function ExpenseScreen() {
                 }}
                 onPress={() => setShowPicker(true)}
               >
-                <Text style={{ color: c.text, fontSize: 18 }}>
-                  {date.toLocaleDateString()}
-                </Text>
+                <Text style={{ color: c.text, fontSize: 18 }}>{date}</Text>
               </TouchableOpacity>
             </View>
 

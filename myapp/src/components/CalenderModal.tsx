@@ -53,9 +53,9 @@ LocaleConfig.defaultLocale = "jp";
 
 type Props = {
   visible: boolean;
-  date: Date;
+  date: string;
   onClose: () => void;
-  onChange: (selectedDate: Date) => void;
+  onChange: (selectedDate: string) => void;
 };
 
 export default function CalendarModal({
@@ -66,8 +66,6 @@ export default function CalendarModal({
 }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
-
-  const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
   return (
     <Modal transparent animationType="fade" visible={visible}>
@@ -92,13 +90,13 @@ export default function CalendarModal({
             >
               <Calendar
                 style={{ width: "100%" }}
-                current={formattedDate}
+                current={date}
                 onDayPress={(day) => {
-                  onChange(new Date(day.dateString));
+                  onChange(day.dateString);
                   onClose();
                 }}
                 markedDates={{
-                  [formattedDate]: { selected: true, selectedColor: c.accent },
+                  [date]: { selected: true, selectedColor: c.accent },
                 }}
                 theme={{
                   backgroundColor: c.background,

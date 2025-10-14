@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,68 +8,82 @@ import {
   StyleSheet,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Calendar } from "react-native-calendars";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
+import { STORAGE_KEYS } from "../util/constant";
+import { getItemsFromStorage } from "../util/storageUtils";
 
 type Expense = {
   id: string;
   amount: number;
-  date: string;
+  date: string; // YYYY-MM-DD
 };
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
-
-  const [expense, setExpense] = useState("");
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const inputRef = useRef<TextInput>(null);
-
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const handleAddExpense = () => {
-    if (!expense) return;
+  const inputRef = useRef<TextInput>(null);
 
-    const newExpense: Expense = {
-      id: String(Date.now()),
-      amount: parseInt(expense),
-      date: new Date().toLocaleDateString(),
-    };
+  const [expense, setExpense] = useState("");
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
-    setExpenses([newExpense, ...expenses]);
-    setExpense("");
-    inputRef.current?.blur();
-  };
+  // 起動時に過去の支出を読み込み
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedExpenses = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.EXPENSES
+        );
+        console.log(storedExpenses);
+
+        setExpenses(storedExpenses);
+      } catch (e) {
+        console.error("支出データ読み込みエラー:", e);
+      }
+    })();
+  }, []);
+
+  // ✅ 選択された日の支出のみ抽出
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => e.date === selectedDate);
+  }, [expenses, selectedDate]);
 
   return (
     <SafeAreaLayout
-      style={{ flex: 1, paddingHorizontal: 16, backgroundColor: c.background }}
+      style={{ flex: 1, backgroundColor: c.background, paddingHorizontal: 16 }}
     >
-      {/* 支出入力 */}
-      <View style={[styles.inputCard, { backgroundColor: c.card }]}>
-        <Text style={[styles.label, { color: c.text }]}>支出を登録</Text>
-        <View style={styles.inputRow}>
-          <TextInput
-            ref={inputRef}
-            style={[styles.input, { borderColor: c.border, color: c.text }]}
-            placeholder="金額を入力"
-            placeholderTextColor={c.placeholder}
-            keyboardType="numeric"
-            value={expense}
-            onChangeText={setExpense}
-          />
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: c.accent, marginLeft: 8 },
-            ]}
-            onPress={handleAddExpense}
-          >
-            <Text style={styles.buttonText}>登録</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* カレンダー */}
+      <Calendar
+        onDayPress={(day) => setSelectedDate(day.dateString)}
+        markedDates={{
+          [selectedDate]: {
+            selected: true,
+            selectedColor: c.accent,
+            selectedTextColor: "#fff",
+          },
+        }}
+        theme={{
+          backgroundColor: c.background,
+          calendarBackground: c.card,
+          textSectionTitleColor: c.text,
+          monthTextColor: c.text,
+          dayTextColor: c.text,
+          todayTextColor: c.accent,
+          arrowColor: c.accent,
+        }}
+        style={{
+          borderRadius: 12,
+          marginBottom: 12,
+          marginTop: insets.top,
+        }}
+      />
 
       {/* 支出一覧 */}
       <Text
@@ -78,35 +92,38 @@ export default function BudgetScreen() {
           { color: c.text, marginTop: 20, marginBottom: 8 },
         ]}
       >
-        支出一覧
+        {selectedDate} の支出一覧
       </Text>
-      <FlatList
-        data={expenses}
-        keyExtractor={(item) => item.id}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-        style={{ flex: 1 }}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.expenseItem,
-              {
-                backgroundColor: c.secondary,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingHorizontal: 12,
-              },
-            ]}
-          >
-            <Text style={[styles.expenseText, { color: c.text }]}>
-              {item.date}
-            </Text>
-            <Text style={[styles.expenseText, { color: c.text }]}>
-              ¥{item.amount.toLocaleString()}
-            </Text>
-          </View>
-        )}
-      />
+
+      {filteredExpenses.length === 0 ? (
+        <Text style={{ color: c.placeholder }}>この日の支出はありません</Text>
+      ) : (
+        <FlatList
+          data={filteredExpenses}
+          keyExtractor={(item) => item.id}
+          style={{ flex: 1 }}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.expenseItem,
+                {
+                  backgroundColor: c.secondary,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  paddingHorizontal: 12,
+                },
+              ]}
+            >
+              <Text style={[styles.expenseText, { color: c.text }]}>
+                ¥{item.amount.toLocaleString()}
+              </Text>
+              <Text style={[styles.expenseText, { color: c.placeholder }]}>
+                {item.date}
+              </Text>
+            </View>
+          )}
+        />
+      )}
     </SafeAreaLayout>
   );
 }
@@ -150,8 +167,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   expenseItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     marginBottom: 8,
   },
