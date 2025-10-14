@@ -6,6 +6,10 @@ import {
   Alert,
   Modal,
   FlatList,
+  TextInput,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SafeAreaLayout from "../components/SafeAreaLayout";
@@ -40,19 +44,6 @@ const isCategory = (v: NewCategoryInput | Category): v is Category => {
   return (v as Category).id !== undefined && (v as Category).id !== "";
 };
 
-const categories: {
-  id: string;
-  name: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { id: "1", name: "食費", icon: "fast-food-outline" },
-  { id: "2", name: "交通", icon: "bus-outline" },
-  { id: "3", name: "日用品", icon: "cart-outline" },
-  { id: "4", name: "光熱費", icon: "flash-outline" },
-  { id: "5", name: "娯楽", icon: "game-controller-outline" },
-  { id: "6", name: "その他", icon: "ellipsis-horizontal-outline" },
-];
-
 const displayConfirmBtn = "登録";
 
 export default function ExpenseScreen() {
@@ -66,9 +57,26 @@ export default function ExpenseScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
+  const [memo, setMemo] = useState("");
 
   const { theme } = useTheme();
   const c = colors[theme];
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false)
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // 起動時に過去の支出を読み込み
   useEffect(() => {
@@ -207,6 +215,7 @@ export default function ExpenseScreen() {
         amount,
         date: date,
         category: category,
+        memo: memo,
       };
       const newExpenses = await addItemToStorage(
         STORAGE_KEYS.EXPENSES,
@@ -220,6 +229,7 @@ export default function ExpenseScreen() {
       console.log("保存データ:", newExpenses);
 
       setExpression("");
+      setMemo("");
       setCalculating(false);
     } catch (error) {
       console.error("保存エラー:", error);
@@ -328,142 +338,174 @@ export default function ExpenseScreen() {
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
-      <View style={{ flex: 1, padding: 20 }}>
-        {/* 上部：金額表示＋日付選択＋カテゴリー選択 */}
-        <View style={{ flex: 1.8, justifyContent: "flex-end" }}>
-          <Text
-            style={{
-              color: c.text,
-              fontSize: 40,
-              textAlign: "right",
-              marginBottom: 5,
-            }}
-          >
-            {expression || "0"}
-          </Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1, padding: 20 }}>
+          {/* 上部：金額表示＋日付選択＋カテゴリー選択 */}
+          <View style={{ flex: 1.8, justifyContent: "flex-end" }}>
+            <Text
+              style={{
+                color: c.text,
+                fontSize: 40,
+                textAlign: "right",
+                marginBottom: 5,
+              }}
+            >
+              {expression || "0"}
+            </Text>
 
-          {/* カテゴリー選択＋日付選択を横並びに */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: 10,
-              marginBottom: 30,
-            }}
-          >
-            {/* カテゴリー選択 */}
-            <View style={{ flex: 1, marginRight: 10 }}>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: c.secondary,
-                  padding: 15,
-                  borderRadius: 8,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onPress={() => setShowPicker(true)}
-              >
-                <Text style={{ color: c.text, fontSize: 18 }}>{date}</Text>
-              </TouchableOpacity>
+            {/* カテゴリー選択＋日付選択を横並びに */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 10,
+                marginBottom: 10,
+              }}
+            >
+              {/* カテゴリー選択 */}
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: c.secondary,
+                    padding: 15,
+                    borderRadius: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onPress={() => setShowPicker(true)}
+                >
+                  <Text style={{ color: c.text, fontSize: 18 }}>{date}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* 日付選択 */}
+              <View style={{ flex: 1 }}>
+                <TouchableOpacity
+                  onPress={() => setShowCategoryModal(true)}
+                  style={{
+                    backgroundColor: c.secondary,
+                    padding: 15,
+                    borderRadius: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ color: c.text, fontSize: 18 }}>
+                    {category || "カテゴリーを選択"}
+                  </Text>
+                  <Ionicons name="chevron-down" size={18} color={c.text} />
+                </TouchableOpacity>
+              </View>
             </View>
-
-            {/* 日付選択 */}
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity
-                onPress={() => setShowCategoryModal(true)}
+            <View
+              style={{
+                marginBottom: 30,
+              }}
+            >
+              <TextInput
                 style={{
                   backgroundColor: c.secondary,
-                  padding: 15,
+                  color: c.text,
                   borderRadius: 8,
+                  padding: 12,
+                  fontSize: 18,
+                }}
+                placeholder="メモを入力（例：昼食、タクシー代など）"
+                placeholderTextColor={c.placeholder}
+                value={memo}
+                onChangeText={setMemo}
+              />
+            </View>
+            <CalendarModal
+              visible={showPicker}
+              date={date}
+              onClose={() => setShowPicker(false)}
+              onChange={(selectedDate) => setDate(selectedDate)}
+            />
+          </View>
+
+          {/* カテゴリーモーダル */}
+          <CategoryModal
+            visible={showCategoryModal}
+            categories={categories}
+            onClose={() => setShowCategoryModal(false)}
+            onSelect={(name) => setCategory(name)}
+            onEdit={() => {
+              setShowCategoryModal(false);
+              setShowCategoryListModal(true);
+            }}
+          />
+          <CategoryListModal
+            visible={showCategoryListModal}
+            categories={categories}
+            onClose={() => setShowCategoryListModal(false)}
+            onDelete={handleCategoryDelete}
+            onReorder={handleCategoryReorder}
+            showCategoryEditModal={showCategoryEditModal}
+            setShowCategoryEditModal={setShowCategoryEditModal}
+            handleCategoryEditOnsave={handleCategoryEditOnSave}
+          />
+
+          {/* 下部：電卓ボタン */}
+          <View style={{ flex: 3, justifyContent: "flex-end" }}>
+            {buttons.map((row, rowIndex) => (
+              <View
+                key={rowIndex}
+                style={{
                   flexDirection: "row",
-                  alignItems: "center",
                   justifyContent: "space-between",
                 }}
               >
-                <Text style={{ color: c.text, fontSize: 18 }}>
-                  {category || "カテゴリーを選択"}
-                </Text>
-                <Ionicons name="chevron-down" size={22} color={c.text} />
-              </TouchableOpacity>
-            </View>
+                {row.map((btn) => {
+                  const isLastEqualBtn = btn === "=";
+                  const displayBtn =
+                    isLastEqualBtn && !calculating ? displayConfirmBtn : btn;
+
+                  return (
+                    <TouchableOpacity
+                      key={btn}
+                      style={{
+                        flex: 1,
+                        margin: 5,
+                        aspectRatio: 1,
+                        borderRadius: 50,
+                        backgroundColor:
+                          displayBtn === displayConfirmBtn
+                            ? c.operator
+                            : ["÷", "×", "−", "+", "="].includes(btn)
+                            ? c.accent
+                            : c.secondary,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onPress={() => {
+                        // キーボードが開いている場合は閉じてから実行
+                        if (keyboardVisible) {
+                          Keyboard.dismiss();
+                          setTimeout(() => {
+                            if (btn === displayConfirmBtn) handleConfirm();
+                            else handlePress(btn);
+                          }, 50); // 150ms後に実行（UX的にちょうど良い）
+                        } else {
+                          if (btn === displayConfirmBtn) handleConfirm();
+                          else handlePress(btn);
+                        }
+                      }}
+                    >
+                      <Text style={{ color: c.text, fontSize: 24 }}>
+                        {displayBtn}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ))}
           </View>
-
-          <CalendarModal
-            visible={showPicker}
-            date={date}
-            onClose={() => setShowPicker(false)}
-            onChange={(selectedDate) => setDate(selectedDate)}
-          />
         </View>
-
-        {/* カテゴリーモーダル */}
-        <CategoryModal
-          visible={showCategoryModal}
-          categories={categories}
-          onClose={() => setShowCategoryModal(false)}
-          onSelect={(name) => setCategory(name)}
-          onEdit={() => {
-            setShowCategoryModal(false);
-            setShowCategoryListModal(true);
-          }}
-        />
-        <CategoryListModal
-          visible={showCategoryListModal}
-          categories={categories}
-          onClose={() => setShowCategoryListModal(false)}
-          onDelete={handleCategoryDelete}
-          onReorder={handleCategoryReorder}
-          showCategoryEditModal={showCategoryEditModal}
-          setShowCategoryEditModal={setShowCategoryEditModal}
-          handleCategoryEditOnsave={handleCategoryEditOnSave}
-        />
-
-        {/* 下部：電卓ボタン */}
-        <View style={{ flex: 3, justifyContent: "flex-end" }}>
-          {buttons.map((row, rowIndex) => (
-            <View
-              key={rowIndex}
-              style={{ flexDirection: "row", justifyContent: "space-between" }}
-            >
-              {row.map((btn) => {
-                const isLastEqualBtn = btn === "=";
-                const displayBtn =
-                  isLastEqualBtn && !calculating ? displayConfirmBtn : btn;
-
-                return (
-                  <TouchableOpacity
-                    key={btn}
-                    style={{
-                      flex: 1,
-                      margin: 5,
-                      aspectRatio: 1,
-                      borderRadius: 50,
-                      backgroundColor:
-                        displayBtn === displayConfirmBtn
-                          ? c.operator
-                          : ["÷", "×", "−", "+", "="].includes(btn)
-                          ? c.accent
-                          : c.secondary,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                    onPress={() => {
-                      if (displayBtn === displayConfirmBtn) handleConfirm();
-                      else handlePress(displayBtn);
-                    }}
-                  >
-                    <Text style={{ color: c.text, fontSize: 24 }}>
-                      {displayBtn}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-      </View>
+      </TouchableWithoutFeedback>
     </SafeAreaLayout>
   );
 }
