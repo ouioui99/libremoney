@@ -51,7 +51,7 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
       setSelectedIcon("");
       setName("");
     }
-  }, [initialCategory]);
+  }, [initialCategory, visible]);
 
   // 検索機能
   const filteredIcons = useMemo(() => {
@@ -59,12 +59,13 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
   }, [search]);
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !selectedIcon) return;
     if (initialCategory) {
       onSave({ ...initialCategory, icon: selectedIcon, name: name.trim() });
     } else {
       onSave({ icon: selectedIcon, name: name.trim() });
     }
+
     setName("");
     setSelectedIcon("");
     setSearch("");
