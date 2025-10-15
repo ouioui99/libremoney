@@ -1,4 +1,10 @@
-import React, { useRef, useState, useMemo, useEffect } from "react";
+import React, {
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -14,41 +20,37 @@ import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { STORAGE_KEYS } from "../util/constant";
 import { getItemsFromStorage } from "../util/storageUtils";
-
-type Expense = {
-  id: string;
-  amount: number;
-  date: string; // YYYY-MM-DD
-};
+import { Expense } from "../types/models";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const inputRef = useRef<TextInput>(null);
-
-  const [expense, setExpense] = useState("");
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
 
   // 起動時に過去の支出を読み込み
-  useEffect(() => {
-    (async () => {
-      try {
-        const storedExpenses = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.EXPENSES
-        );
-        console.log(storedExpenses);
+  useFocusEffect(
+    useCallback(() => {
+      const loadExpenses = async () => {
+        try {
+          const storedExpenses = await getItemsFromStorage<Expense>(
+            STORAGE_KEYS.EXPENSES
+          );
+          setExpenses(storedExpenses);
+        } catch (e) {
+          console.error("支出データ読み込みエラー:", e);
+        }
+      };
 
-        setExpenses(storedExpenses);
-      } catch (e) {
-        console.error("支出データ読み込みエラー:", e);
-      }
-    })();
-  }, []);
+      loadExpenses();
+    }, [])
+  );
 
   // ✅ 選択された日の支出のみ抽出
   const filteredExpenses = useMemo(() => {
@@ -79,7 +81,6 @@ export default function BudgetScreen() {
           arrowColor: c.accent,
         }}
         style={{
-          borderRadius: 12,
           marginBottom: 12,
           marginTop: insets.top,
         }}
@@ -102,23 +103,44 @@ export default function BudgetScreen() {
           data={filteredExpenses}
           keyExtractor={(item) => item.id}
           style={{ flex: 1 }}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <View
               style={[
                 styles.expenseItem,
                 {
-                  backgroundColor: c.secondary,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
+                  backgroundColor:
+                    index % 2 != 0
+                      ? c.card
+                      : theme === "dark"
+                      ? `${c.secondary}60`
+                      : `${c.secondary}90`,
                   paddingHorizontal: 12,
+                  paddingVertical: 8,
                 },
               ]}
             >
-              <Text style={[styles.expenseText, { color: c.text }]}>
-                ¥{item.amount.toLocaleString()}
-              </Text>
-              <Text style={[styles.expenseText, { color: c.placeholder }]}>
-                {item.date}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={[styles.expenseText, { color: c.text }]}>
+                  ¥{item.amount.toLocaleString()}
+                </Text>
+                <Text style={[styles.expenseDate, { color: c.placeholder }]}>
+                  {item.date}
+                </Text>
+              </View>
+
+              <Text
+                style={[
+                  styles.memoText,
+                  { color: c.text, marginTop: 4, opacity: 0.8 },
+                ]}
+              >
+                📝 {item.memo}
               </Text>
             </View>
           )}
@@ -167,11 +189,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   expenseItem: {
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingVertical: 12,
   },
   expenseText: {
     fontSize: 16,
+    fontWeight: "600",
+  },
+  expenseDate: {
+    fontSize: 14,
+  },
+  memoText: {
+    fontSize: 14,
+    fontStyle: "italic",
   },
 });
