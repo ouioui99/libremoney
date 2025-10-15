@@ -486,11 +486,12 @@ export default function ExpenseScreen() {
                         if (keyboardVisible) {
                           Keyboard.dismiss();
                           setTimeout(() => {
-                            if (btn === displayConfirmBtn) handleConfirm();
+                            if (displayBtn === displayConfirmBtn)
+                              handleConfirm();
                             else handlePress(btn);
                           }, 50); // 150ms後に実行（UX的にちょうど良い）
                         } else {
-                          if (btn === displayConfirmBtn) handleConfirm();
+                          if (displayBtn === displayConfirmBtn) handleConfirm();
                           else handlePress(btn);
                         }
                       }}
