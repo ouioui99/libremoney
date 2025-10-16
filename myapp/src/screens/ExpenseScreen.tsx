@@ -30,6 +30,7 @@ import {
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { STORAGE_KEYS } from "../util/constant";
 import { Category, Expense, NewCategoryInput } from "../types/models";
+import { getCategory } from "../util/displayUtils";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -52,7 +53,7 @@ export default function ExpenseScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [category, setCategory] = useState<string>("");
+  const [categoryId, setCategory] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -90,6 +91,9 @@ export default function ExpenseScreen() {
         const storedCategories = await getItemsFromStorage<Category>(
           STORAGE_KEYS.CATEGORIES
         );
+        //テスト用
+        //AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
+
         // order プロパティでソートして state にセット
         const sorted = storedCategories.slice().sort((a, b) => {
           const ao = Number(a.order ?? a.id ?? 0);
@@ -214,7 +218,7 @@ export default function ExpenseScreen() {
         id: newId,
         amount,
         date: date,
-        category: category,
+        categoryId: categoryId,
         memo: memo,
       };
       const newExpenses = await addItemToStorage(
@@ -225,7 +229,7 @@ export default function ExpenseScreen() {
 
       setExpenses(newExpenses);
 
-      Alert.alert("保存完了", `${category}に支出を保存しました`);
+      Alert.alert("保存完了", `${categoryId}に支出を保存しました`);
       console.log("保存データ:", newExpenses);
 
       setExpression("");
@@ -336,6 +340,8 @@ export default function ExpenseScreen() {
     }
   };
 
+  const selectedCategory = getCategory(categories, categoryId);
+
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -380,7 +386,7 @@ export default function ExpenseScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* 日付選択 */}
+              {/* カテゴリー選択 */}
               <View style={{ flex: 1 }}>
                 <TouchableOpacity
                   onPress={() => setShowCategoryModal(true)}
@@ -393,8 +399,19 @@ export default function ExpenseScreen() {
                     justifyContent: "space-between",
                   }}
                 >
+                  {selectedCategory ? (
+                    <Ionicons
+                      name={selectedCategory.icon}
+                      size={20}
+                      color={c.text}
+                      style={{ marginRight: 1 }}
+                    />
+                  ) : null}
+
                   <Text style={{ color: c.text, fontSize: 18 }}>
-                    {category || "カテゴリーを選択"}
+                    {selectedCategory
+                      ? selectedCategory.name
+                      : "カテゴリーを選択"}
                   </Text>
                   <Ionicons name="chevron-down" size={18} color={c.text} />
                 </TouchableOpacity>
@@ -432,7 +449,7 @@ export default function ExpenseScreen() {
             visible={showCategoryModal}
             categories={categories}
             onClose={() => setShowCategoryModal(false)}
-            onSelect={(name) => setCategory(name)}
+            onSelect={(categoryId) => setCategory(categoryId)}
             onEdit={() => {
               setShowCategoryModal(false);
               setShowCategoryListModal(true);

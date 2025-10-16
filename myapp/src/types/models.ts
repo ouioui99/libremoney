@@ -18,6 +18,6 @@ export interface Expense {
   id: string;
   amount: number;
   date: string; // ISO文字列
-  category: string; // Categoryのidを参照
+  categoryId: string; // Categoryのidを参照
   memo?: string;
 }

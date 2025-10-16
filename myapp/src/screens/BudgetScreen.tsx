@@ -1,27 +1,23 @@
-import React, {
-  useRef,
-  useState,
-  useMemo,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Calendar } from "react-native-calendars";
+import { useFocusEffect } from "@react-navigation/native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { STORAGE_KEYS } from "../util/constant";
 import { getItemsFromStorage } from "../util/storageUtils";
-import { Expense } from "../types/models";
-import { useFocusEffect } from "@react-navigation/native";
+import EditExpenseModal from "../components/EditExpenseModal";
+import { Expense, Category } from "../types/models";
+import { getCategory } from "../util/displayUtils";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -29,30 +25,59 @@ export default function BudgetScreen() {
   const c = colors[theme];
 
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
 
-  // 起動時に過去の支出を読み込み
+  // ✅ 画面表示時・フォーカス時に支出＆カテゴリーを読み込み
   useFocusEffect(
     useCallback(() => {
-      const loadExpenses = async () => {
+      const loadData = async () => {
         try {
-          const storedExpenses = await getItemsFromStorage<Expense>(
-            STORAGE_KEYS.EXPENSES
-          );
+          const [storedExpenses, storedCategories] = await Promise.all([
+            getItemsFromStorage<Expense>(STORAGE_KEYS.EXPENSES),
+            getItemsFromStorage<Category>(STORAGE_KEYS.CATEGORIES),
+          ]);
           setExpenses(storedExpenses);
+          setCategories(storedCategories);
         } catch (e) {
-          console.error("支出データ読み込みエラー:", e);
+          console.error("データ読み込みエラー:", e);
         }
       };
-
-      loadExpenses();
+      loadData();
     }, [])
   );
 
-  // ✅ 選択された日の支出のみ抽出
+  // ✅ 支出がある日付にドットを付ける
+  const markedDates = useMemo(() => {
+    const marks: Record<string, any> = {};
+
+    expenses.forEach((e) => {
+      if (!marks[e.date]) {
+        marks[e.date] = {
+          marked: true,
+          dots: [{ color: c.accent }],
+        };
+      }
+    });
+
+    if (selectedDate) {
+      marks[selectedDate] = {
+        ...(marks[selectedDate] || {}),
+        selected: true,
+        selectedColor: c.accent,
+        selectedTextColor: "#fff",
+      };
+    }
+
+    return marks;
+  }, [expenses, selectedDate, c]);
+
+  // ✅ 選択された日の支出のみ
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => e.date === selectedDate);
   }, [expenses, selectedDate]);
@@ -64,13 +89,8 @@ export default function BudgetScreen() {
       {/* カレンダー */}
       <Calendar
         onDayPress={(day) => setSelectedDate(day.dateString)}
-        markedDates={{
-          [selectedDate]: {
-            selected: true,
-            selectedColor: c.accent,
-            selectedTextColor: "#fff",
-          },
-        }}
+        markingType="multi-dot"
+        markedDates={markedDates}
         theme={{
           backgroundColor: c.background,
           calendarBackground: c.card,
@@ -103,103 +123,108 @@ export default function BudgetScreen() {
           data={filteredExpenses}
           keyExtractor={(item) => item.id}
           style={{ flex: 1 }}
-          renderItem={({ item, index }) => (
-            <View
-              style={[
-                styles.expenseItem,
-                {
-                  backgroundColor:
-                    index % 2 != 0
-                      ? c.card
-                      : theme === "dark"
-                      ? `${c.secondary}60`
-                      : `${c.secondary}90`,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                },
-              ]}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+          renderItem={({ item, index }) => {
+            const category = getCategory(categories, item.categoryId);
+            return (
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedExpense(item);
+                  setShowEditModal(true);
                 }}
               >
-                <Text style={[styles.expenseText, { color: c.text }]}>
-                  ¥{item.amount.toLocaleString()}
-                </Text>
-                <Text style={[styles.expenseDate, { color: c.placeholder }]}>
-                  {item.date}
-                </Text>
-              </View>
+                <View
+                  style={[
+                    styles.expenseItem,
+                    {
+                      backgroundColor:
+                        index % 2 !== 0
+                          ? c.card
+                          : theme === "dark"
+                          ? `${c.secondary}60`
+                          : `${c.secondary}90`,
+                      flexDirection: "column",
+                      paddingHorizontal: 12,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    {/* 金額 */}
+                    <Text style={[styles.expenseText, { color: c.text }]}>
+                      ¥{item.amount.toLocaleString()}
+                    </Text>
+                    {category && (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4, // ← アイコンとテキストの間に少し余白
+                        }}
+                      >
+                        <Ionicons
+                          name={category.icon}
+                          size={18}
+                          color={c.accent}
+                        />
+                        <Text
+                          style={[styles.categoryText, { color: c.accent }]}
+                        >
+                          {category.name}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
 
-              <Text
-                style={[
-                  styles.memoText,
-                  { color: c.text, marginTop: 4, opacity: 0.8 },
-                ]}
-              >
-                📝 {item.memo}
-              </Text>
-            </View>
-          )}
+                  {/* メモ */}
+                  <Text
+                    style={{
+                      color: c.placeholder,
+                      fontSize: 14,
+                      marginTop: 4,
+                    }}
+                  >
+                    📝 {item.memo}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
+
+      {/* 編集モーダル */}
+      <EditExpenseModal
+        visible={showEditModal}
+        expense={selectedExpense}
+        onClose={() => setShowEditModal(false)}
+        onSave={(updated) => {
+          setExpenses((prev) =>
+            prev.map((e) => (e.id === updated.id ? updated : e))
+          );
+        }}
+      />
     </SafeAreaLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  inputCard: {
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-  },
-  button: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
   label: {
     fontSize: 16,
     fontWeight: "600",
   },
   expenseItem: {
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   expenseText: {
     fontSize: 16,
-    fontWeight: "600",
   },
-  expenseDate: {
+  categoryText: {
     fontSize: 14,
-  },
-  memoText: {
-    fontSize: 14,
-    fontStyle: "italic",
+    fontWeight: "500",
   },
 });

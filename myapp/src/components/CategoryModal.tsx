@@ -101,7 +101,7 @@ export default function CategoryModal({
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
-                    onSelect(item.name);
+                    onSelect(item.id);
                     onClose();
                   }}
                   style={{
