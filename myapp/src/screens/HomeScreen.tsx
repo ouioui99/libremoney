@@ -1,5 +1,5 @@
 // screens/HomeScreen.tsx
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,28 +7,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Alert,
 } from "react-native";
 import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { useTheme } from "../contexts/ThemeContext";
-
-interface Expense {
-  id: string;
-  amount: number;
-  date: string;
-  category: string;
-}
-
-const CATEGORY_LIST = [
-  "食費",
-  "交通",
-  "娯楽",
-  "日用品",
-  "その他",
-  "医療",
-  "教育",
-  "交際",
-];
+import { STORAGE_KEYS } from "../util/constant";
+import {
+  addItemToStorage,
+  getItemsFromStorage,
+  getNextId,
+} from "../util/storageUtils";
+import { Category, Expense } from "../types/models";
 
 export default function HomeScreen() {
   const targetSavings = 500000;
@@ -37,7 +27,8 @@ export default function HomeScreen() {
   const totalDays = 150;
 
   const [expense, setExpense] = useState("");
-  const [category, setCategory] = useState(CATEGORY_LIST[0]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState<Category>(categories[0]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const inputRef = useRef<TextInput>(null);
 
@@ -46,29 +37,78 @@ export default function HomeScreen() {
 
   const progress = (totalDays - remainingDays) / totalDays;
 
-  const handleAddExpense = () => {
-    if (!expense) return;
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedExpenses = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.EXPENSES
+        );
+        setExpenses(storedExpenses || []);
 
-    const newExpense: Expense = {
-      id: String(Date.now()),
-      amount: parseInt(expense, 10),
-      date: new Date().toLocaleDateString(),
-      category,
-    };
+        const storedCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.CATEGORIES
+        );
 
-    setExpenses([newExpense, ...expenses]);
-    setExpense("");
-    inputRef.current?.blur();
+        // order プロパティでソート
+        const sorted = (storedCategories || []).slice().sort((a, b) => {
+          const ao = Number(a.order ?? a.id ?? 0);
+          const bo = Number(b.order ?? b.id ?? 0);
+          return ao - bo;
+        });
+        setCategories(sorted);
+
+        if (categories.length > 0 && !category) {
+          setCategory(sorted[0]);
+        }
+      } catch (e) {
+        console.error("支出データ読み込みエラー:", e);
+      }
+    })();
+  }, [categories]);
+
+  const handleAddExpense = async () => {
+    if (!expense || !category) return;
+    try {
+      const amount = parseFloat(expense);
+      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
+
+      const newExpense = {
+        id: newId,
+        amount,
+        date: new Date().toISOString().split("T")[0],
+        categoryId: category.id,
+      };
+
+      const newExpenses = await addItemToStorage(
+        STORAGE_KEYS.EXPENSES,
+        expenses,
+        newExpense
+      );
+
+      setExpenses(newExpenses);
+      setExpense("");
+      setCategory(categories[0]);
+      inputRef.current?.blur();
+    } catch (error) {
+      console.error("保存エラー:", error);
+      Alert.alert("エラー", "保存に失敗しました");
+    }
   };
 
+  /** ✅ カテゴリーごとの合計金額を算出 */
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
-    CATEGORY_LIST.forEach((c) => (totals[c] = 0));
+    categories.forEach((cat) => (totals[cat.id] = 0));
+
     expenses.forEach((e) => {
-      totals[e.category] += e.amount;
+      const catId = e.categoryId;
+      if (catId && totals.hasOwnProperty(catId)) {
+        totals[catId] += e.amount;
+      }
     });
+
     return totals;
-  }, [expenses]);
+  }, [expenses, categories]);
 
   const maxAmount = Math.max(...Object.values(categoryTotals), 1);
 
@@ -99,13 +139,14 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.buttonRow}>
-            {CATEGORY_LIST.slice(0, 5).map((cat) => (
+            {categories.slice(0, 5).map((cat) => (
               <TouchableOpacity
-                key={cat}
+                key={cat.id}
                 style={[
                   styles.categoryButton,
                   {
-                    backgroundColor: category === cat ? c.accent : c.secondary,
+                    backgroundColor:
+                      category?.id === cat.id ? c.accent : c.secondary,
                   },
                 ]}
                 onPress={() => setCategory(cat)}
@@ -113,10 +154,13 @@ export default function HomeScreen() {
                 <Text
                   style={[
                     styles.buttonText,
-                    { fontSize: 14, color: category === cat ? "#fff" : c.text },
+                    {
+                      fontSize: 14,
+                      color: category?.id === cat.id ? "#fff" : c.text,
+                    },
                   ]}
                 >
-                  {cat}
+                  {cat.name}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -130,21 +174,21 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* カテゴリー別棒グラフ */}
+        {/* ✅ カテゴリー別支出 */}
         <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>
             カテゴリー別支出
           </Text>
 
           <FlatList
-            data={CATEGORY_LIST}
-            keyExtractor={(item) => item}
+            data={categories}
+            keyExtractor={(item) => item.id}
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={styles.barRow}>
                 <Text style={[styles.subAmount, { width: 60, color: c.text }]}>
-                  {item}
+                  {item.name}
                 </Text>
                 <View
                   style={[
@@ -154,7 +198,7 @@ export default function HomeScreen() {
                 >
                   <View
                     style={{
-                      width: `${(categoryTotals[item] / maxAmount) * 100}%`,
+                      width: `${(categoryTotals[item.id] / maxAmount) * 100}%`,
                       backgroundColor: c.accent,
                       height: "100%",
                       borderRadius: 5,
@@ -167,7 +211,7 @@ export default function HomeScreen() {
                     { width: 70, textAlign: "right", color: c.text },
                   ]}
                 >
-                  ¥{categoryTotals[item].toLocaleString()}
+                  ¥{categoryTotals[item.id]?.toLocaleString?.() ?? "0"}
                 </Text>
               </View>
             )}

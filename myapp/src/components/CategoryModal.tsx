@@ -13,12 +13,7 @@ import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-
-export interface Category {
-  id: string;
-  name: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}
+import { Category } from "../types/models";
 
 interface Props {
   visible: boolean;

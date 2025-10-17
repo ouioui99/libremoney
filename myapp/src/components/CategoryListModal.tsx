@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DraggableFlatList, {
   ScaleDecorator,
@@ -86,6 +93,8 @@ export default function CategoryListModal({
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onLongPress={async () => {
+                    console.log("ddd");
+
                     await Haptics.impactAsync(
                       Haptics.ImpactFeedbackStyle.Medium
                     );
@@ -106,12 +115,12 @@ export default function CategoryListModal({
                   }}
                 >
                   {/* 左：削除ボタン */}
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => onDelete(item.id)}
                     style={{ marginRight: 12, padding: 4 }}
                   >
                     <Ionicons name="remove-circle" size={22} color={c.error} />
-                  </TouchableOpacity>
+                  </Pressable>
 
                   {/* アイコン */}
                   <Ionicons
