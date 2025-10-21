@@ -21,17 +21,29 @@ import { Category, NewCategoryInput } from "../types/models";
 
 interface Props {
   visible: boolean;
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   onClose: () => void;
   categories: Category[];
-  onDelete: (id: string) => void;
-  onReorder: (newCategories: Category[]) => void;
+  onDelete: (
+    id: string,
+    setCategories: (value: React.SetStateAction<Category[]>) => void
+  ) => void;
+  onReorder: (
+    newList: Category[],
+    setCategories: (value: React.SetStateAction<Category[]>) => void
+  ) => Promise<void>;
   showCategoryEditModal: boolean;
   setShowCategoryEditModal: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCategoryEditOnsave: (category: NewCategoryInput | Category) => void;
+  handleCategoryEditOnsave: (
+    categories: Category[],
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    category: NewCategoryInput | Category
+  ) => Promise<void>;
 }
 
 export default function CategoryListModal({
   visible,
+  setCategories,
   onClose,
   categories,
   onDelete,
@@ -82,11 +94,20 @@ export default function CategoryListModal({
             data={categories}
             keyExtractor={(item) => item.id}
             onDragEnd={({ data }) => {
+              // 1) UI を即時更新してチラつきを防ぐ
               const updated = data.map((item, idx) => ({
                 ...item,
                 order: String(idx + 1),
               }));
-              onReorder(updated);
+              setCategories(updated);
+
+              // 2) 親に永続化を委譲（非同期）：失敗したらログ（必要ならロールバックを実装）
+              const res = onReorder(updated, setCategories);
+              if (res && typeof (res as Promise<void>).catch === "function") {
+                (res as Promise<void>).catch((e) =>
+                  console.error("カテゴリ並び替え保存エラー:", e)
+                );
+              }
             }}
             renderItem={({ item, drag, isActive }) => (
               <ScaleDecorator>
@@ -116,7 +137,7 @@ export default function CategoryListModal({
                 >
                   {/* 左：削除ボタン */}
                   <Pressable
-                    onPress={() => onDelete(item.id)}
+                    onPress={() => onDelete(item.id, setCategories)}
                     style={{ marginRight: 12, padding: 4 }}
                   >
                     <Ionicons name="remove-circle" size={22} color={c.error} />
@@ -170,7 +191,7 @@ export default function CategoryListModal({
             visible={showCategoryEditModal}
             onClose={() => setShowCategoryEditModal(false)}
             onSave={(category) => {
-              handleCategoryEditOnsave(category);
+              handleCategoryEditOnsave(categories, setCategories, category);
               setShowCategoryEditModal(false);
               setEditingCategory(null);
             }}

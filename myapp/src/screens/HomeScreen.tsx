@@ -19,6 +19,13 @@ import {
   getNextId,
 } from "../util/storageUtils";
 import { Category, Expense } from "../types/models";
+import CategorySelector from "../components/CategorySelector";
+import {
+  handleCategoryDelete,
+  handleCategoryEditOnSave,
+  handleCategoryReorder,
+} from "../util/categoryUtils";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const targetSavings = 500000;
@@ -27,10 +34,14 @@ export default function HomeScreen() {
   const totalDays = 150;
 
   const [expense, setExpense] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState<Category>(categories[0]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const inputRef = useRef<TextInput>(null);
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState<Category>(categories[0]);
+  const [categoryId, setCategoryId] = useState<string>("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryListModal, setShowCategoryListModal] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
@@ -64,7 +75,7 @@ export default function HomeScreen() {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, [categories]);
+  }, []);
 
   const handleAddExpense = async () => {
     if (!expense || !category) return;
@@ -164,6 +175,12 @@ export default function HomeScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+            <TouchableOpacity
+              style={[styles.categoryButton, { backgroundColor: c.secondary }]}
+              onPress={() => setShowCategoryModal(true)}
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color={c.text} />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -243,6 +260,20 @@ export default function HomeScreen() {
             />
           </View>
         </View>
+        {/* カテゴリーセレクター */}
+        <CategorySelector
+          categories={categories}
+          setCategories={setCategories}
+          selectedCategoryId={categoryId}
+          onSelect={(id: string) => setCategoryId(id)}
+          onReorder={handleCategoryReorder}
+          onDelete={handleCategoryDelete}
+          onEditSave={handleCategoryEditOnSave}
+          showCategoryModal={showCategoryModal}
+          setShowCategoryModal={setShowCategoryModal}
+          showCategoryListModal={showCategoryListModal}
+          setShowCategoryListModal={setShowCategoryListModal}
+        />
       </View>
     </SafeAreaLayout>
   );

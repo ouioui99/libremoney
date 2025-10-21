@@ -10,11 +10,22 @@ import { useTheme } from "../contexts/ThemeContext";
 
 interface CategorySelectorProps {
   categories: Category[];
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   selectedCategoryId?: string;
   onSelect: (categoryId: string) => void;
-  onReorder: (newList: Category[]) => void;
-  onDelete: (id: string) => void;
-  onEditSave: (category: NewCategoryInput | Category) => void;
+  onReorder: (
+    newList: Category[],
+    setCategories: (value: React.SetStateAction<Category[]>) => void
+  ) => Promise<void>;
+  onDelete: (
+    id: string,
+    setCategories: (value: React.SetStateAction<Category[]>) => void
+  ) => void;
+  onEditSave: (
+    categories: Category[],
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    category: NewCategoryInput | Category
+  ) => Promise<void>;
   showCategoryModal: boolean;
   setShowCategoryModal: React.Dispatch<React.SetStateAction<boolean>>;
   showCategoryListModal: boolean;
@@ -23,6 +34,7 @@ interface CategorySelectorProps {
 
 export default function CategorySelector({
   categories,
+  setCategories,
   selectedCategoryId,
   onSelect,
   onReorder,
@@ -59,6 +71,7 @@ export default function CategorySelector({
 
       <CategoryListModal
         visible={showCategoryListModal}
+        setCategories={setCategories}
         categories={categories}
         onClose={() => setShowCategoryListModal(false)}
         onDelete={onDelete}

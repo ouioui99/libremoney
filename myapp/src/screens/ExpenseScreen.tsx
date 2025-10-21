@@ -4,31 +4,21 @@ import {
   Text,
   TouchableOpacity,
   Alert,
-  Modal,
-  FlatList,
   TextInput,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import CalendarModal from "../components/CalenderModal";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import { Ionicons } from "@expo/vector-icons";
-import CategoryModal from "../components/CategoryModal";
-import CategoryListModal from "../components/CategoryListModal";
-import CategoryEditModal from "../components/CategoryEditModal";
 import {
   addItemToStorage,
-  editItemInStorage,
   getItemsFromStorage,
   getNextId,
-  removeItemFromStorage,
 } from "../util/storageUtils";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
-import { STORAGE_KEYS } from "../util/constant";
+import { CALC_BUTTONS, STORAGE_KEYS } from "../util/constant";
 import { Category, Expense, NewCategoryInput } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import CategorySelector from "../components/CategorySelector";
@@ -37,14 +27,6 @@ import {
   handleCategoryEditOnSave,
   handleCategoryReorder,
 } from "../util/categoryUtils";
-
-const buttons = [
-  ["⌫", "AC", "%", "÷"],
-  ["7", "8", "9", "×"],
-  ["4", "5", "6", "−"],
-  ["1", "2", "3", "+"],
-  ["±", "0", ".", "="],
-];
 
 // 型ガード関数
 const isCategory = (v: NewCategoryInput | Category): v is Category => {
@@ -63,7 +45,6 @@ export default function ExpenseScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
-  const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
   const [memo, setMemo] = useState("");
 
   const { theme } = useTheme();
@@ -247,104 +228,103 @@ export default function ExpenseScreen() {
     }
   };
 
-  const handleCategoryEditOnSave = async (
-    category: NewCategoryInput | Category
-  ) => {
-    // 編集 or 追加を判定して保存処理
-    // category が Category 型なら編集、NewCategoryInput 型なら新規追加
-    if (isCategory(category)) {
-      // 編集
-      try {
-        const id = category.id;
+  //   category: NewCategoryInput | Category
+  // ) => {
+  //   // 編集 or 追加を判定して保存処理
+  //   // category が Category 型なら編集、NewCategoryInput 型なら新規追加
+  //   if (isCategory(category)) {
+  //     // 編集
+  //     try {
+  //       const id = category.id;
 
-        const newCategory = {
-          id: id,
-          name: category.name,
-          icon: category.icon as keyof typeof Ionicons.glyphMap,
-          order: category.order,
-        };
+  //       const newCategory = {
+  //         id: id,
+  //         name: category.name,
+  //         icon: category.icon as keyof typeof Ionicons.glyphMap,
+  //         order: category.order,
+  //       };
 
-        const updatedCategories = await editItemInStorage<Category>(
-          STORAGE_KEYS.CATEGORIES,
-          (item) => item.id === id,
-          categories,
-          newCategory as unknown as Category
-        );
+  //       const updatedCategories = await editItemInStorage<Category>(
+  //         STORAGE_KEYS.CATEGORIES,
+  //         (item) => item.id === id,
+  //         categories,
+  //         newCategory as unknown as Category
+  //       );
 
-        setCategories(updatedCategories);
-      } catch (e) {
-        console.error("カテゴリ編集保存エラー:", e);
-      }
-      return;
-    } else {
-      // 新規追加
-      const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
+  //       setCategories(updatedCategories);
+  //     } catch (e) {
+  //       console.error("カテゴリ編集保存エラー:", e);
+  //     }
+  //     return;
+  //   } else {
+  //     // 新規追加
+  //     const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
 
-      const newCategory = {
-        id: newId,
-        // 末尾に追加するので現在の件数＋1 を order にする
-        order: String((categories?.length ?? 0) + 1),
-        icon: category.icon as keyof typeof Ionicons.glyphMap,
-        name: category.name,
-      };
+  //     const newCategory = {
+  //       id: newId,
+  //       // 末尾に追加するので現在の件数＋1 を order にする
+  //       order: String((categories?.length ?? 0) + 1),
+  //       icon: category.icon as keyof typeof Ionicons.glyphMap,
+  //       name: category.name,
+  //     };
 
-      const newCategories = await addItemToStorage(
-        STORAGE_KEYS.CATEGORIES,
-        categories,
-        newCategory
-      );
+  //     const newCategories = await addItemToStorage(
+  //       STORAGE_KEYS.CATEGORIES,
+  //       categories,
+  //       newCategory
+  //     );
 
-      setCategories(newCategories);
-    }
-  };
+  //     setCategories(newCategories);
+  //   }
+  // };
 
   // 親で削除を処理（ストレージと state を更新）
-  const handleCategoryDelete = (id: string) => {
-    Alert.alert(
-      "確認",
-      "このカテゴリを削除しますか？",
-      [
-        {
-          text: "キャンセル",
-          style: "cancel",
-        },
-        {
-          text: "削除",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const updated = await removeItemFromStorage<Category>(
-                STORAGE_KEYS.CATEGORIES,
-                (item) => item.id === id
-              );
-              setCategories(updated);
-            } catch (e) {
-              console.error("カテゴリ削除エラー:", e);
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
+  // const handleCategoryDelete = (id: string) => {
+  //   Alert.alert(
+  //     "確認",
+  //     "このカテゴリを削除しますか？",
+  //     [
+  //       {
+  //         text: "キャンセル",
+  //         style: "cancel",
+  //       },
+  //       {
+  //         text: "削除",
+  //         style: "destructive",
+  //         onPress: async () => {
+  //           try {
+  //             const updated = await removeItemFromStorage<Category>(
+  //               STORAGE_KEYS.CATEGORIES,
+  //               (item) => item.id === id
+  //             );
+  //             setCategories(updated);
+  //           } catch (e) {
+  //             console.error("カテゴリ削除エラー:", e);
+  //           }
+  //         },
+  //       },
+  //     ],
+  //     { cancelable: true }
+  //   );
+  // };
 
   // 並び替えを親で受けて保存
-  const handleCategoryReorder = async (newList: Category[]) => {
-    try {
-      // 各要素に order を振り直す（1始まり）
-      const updated = newList.map((cat, idx) => ({
-        ...cat,
-        order: String(idx + 1),
-      }));
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CATEGORIES,
-        JSON.stringify(updated)
-      );
-      setCategories(updated);
-    } catch (e) {
-      console.error("カテゴリ並び替え保存エラー:", e);
-    }
-  };
+  // const handleCategoryReorder = async (newList: Category[]) => {
+  //   try {
+  //     // 各要素に order を振り直す（1始まり）
+  //     const updated = newList.map((cat, idx) => ({
+  //       ...cat,
+  //       order: String(idx + 1),
+  //     }));
+  //     await AsyncStorage.setItem(
+  //       STORAGE_KEYS.CATEGORIES,
+  //       JSON.stringify(updated)
+  //     );
+  //     setCategories(updated);
+  //   } catch (e) {
+  //     console.error("カテゴリ並び替え保存エラー:", e);
+  //   }
+  // };
 
   const selectedCategory = getCategory(categories, categoryId);
 
@@ -450,44 +430,24 @@ export default function ExpenseScreen() {
             />
           </View>
 
-          {/* <CategorySelector
+          {/* カテゴリーセレクター */}
+          <CategorySelector
             categories={categories}
+            setCategories={setCategories}
             selectedCategoryId={categoryId}
             onSelect={(id: string) => setCategoryId(id)}
-            onReorder={handleCategoryReorder(categories, setCategories)}
-            onDelete={handleCategoryDelete(categoryId,setCategories)}
-            onEditSave={handleCategoryEditOnSave(categories, setCategories)}
+            onReorder={handleCategoryReorder}
+            onDelete={handleCategoryDelete}
+            onEditSave={handleCategoryEditOnSave}
             showCategoryModal={showCategoryModal}
             setShowCategoryModal={setShowCategoryModal}
             showCategoryListModal={showCategoryListModal}
             setShowCategoryListModal={setShowCategoryListModal}
-          /> */}
-
-          {/* カテゴリーモーダル */}
-          <CategoryModal
-            visible={showCategoryModal}
-            categories={categories}
-            onClose={() => setShowCategoryModal(false)}
-            onSelect={(categoryId) => setCategoryId(categoryId)}
-            onEdit={() => {
-              setShowCategoryModal(false);
-              setShowCategoryListModal(true);
-            }}
-          />
-          <CategoryListModal
-            visible={showCategoryListModal}
-            categories={categories}
-            onClose={() => setShowCategoryListModal(false)}
-            onDelete={handleCategoryDelete}
-            onReorder={handleCategoryReorder}
-            showCategoryEditModal={showCategoryEditModal}
-            setShowCategoryEditModal={setShowCategoryEditModal}
-            handleCategoryEditOnsave={handleCategoryEditOnSave}
           />
 
           {/* 下部：電卓ボタン */}
           <View style={{ flex: 3, justifyContent: "flex-end" }}>
-            {buttons.map((row, rowIndex) => (
+            {CALC_BUTTONS.map((row, rowIndex) => (
               <View
                 key={rowIndex}
                 style={{
