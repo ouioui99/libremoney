@@ -31,6 +31,12 @@ import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { STORAGE_KEYS } from "../util/constant";
 import { Category, Expense, NewCategoryInput } from "../types/models";
 import { getCategory } from "../util/displayUtils";
+import CategorySelector from "../components/CategorySelector";
+import {
+  handleCategoryDelete,
+  handleCategoryEditOnSave,
+  handleCategoryReorder,
+} from "../util/categoryUtils";
 
 const buttons = [
   ["⌫", "AC", "%", "÷"],
@@ -53,7 +59,7 @@ export default function ExpenseScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categoryId, setCategory] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -444,12 +450,25 @@ export default function ExpenseScreen() {
             />
           </View>
 
+          {/* <CategorySelector
+            categories={categories}
+            selectedCategoryId={categoryId}
+            onSelect={(id: string) => setCategoryId(id)}
+            onReorder={handleCategoryReorder(categories, setCategories)}
+            onDelete={handleCategoryDelete(categoryId,setCategories)}
+            onEditSave={handleCategoryEditOnSave(categories, setCategories)}
+            showCategoryModal={showCategoryModal}
+            setShowCategoryModal={setShowCategoryModal}
+            showCategoryListModal={showCategoryListModal}
+            setShowCategoryListModal={setShowCategoryListModal}
+          /> */}
+
           {/* カテゴリーモーダル */}
           <CategoryModal
             visible={showCategoryModal}
             categories={categories}
             onClose={() => setShowCategoryModal(false)}
-            onSelect={(categoryId) => setCategory(categoryId)}
+            onSelect={(categoryId) => setCategoryId(categoryId)}
             onEdit={() => {
               setShowCategoryModal(false);
               setShowCategoryListModal(true);
