@@ -26,6 +26,7 @@ import {
   handleCategoryReorder,
 } from "../util/categoryUtils";
 import { Ionicons } from "@expo/vector-icons";
+import { getTodayLocal } from "../util/dateUtils";
 
 export default function HomeScreen() {
   const targetSavings = 500000;
@@ -68,7 +69,7 @@ export default function HomeScreen() {
         });
         setCategories(sorted);
 
-        if (categories.length > 0 && !category) {
+        if (sorted.length > 0) {
           setCategory(sorted[0]);
         }
       } catch (e) {
@@ -86,7 +87,7 @@ export default function HomeScreen() {
       const newExpense = {
         id: newId,
         amount,
-        date: new Date().toISOString().split("T")[0],
+        date: getTodayLocal(),
         categoryId: category.id,
       };
 

@@ -18,6 +18,7 @@ import EditExpenseModal from "../components/EditExpenseModal";
 import { Expense, Category } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import { Ionicons } from "@expo/vector-icons";
+import { getTodayLocal } from "../util/dateUtils";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -29,9 +30,7 @@ export default function BudgetScreen() {
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayLocal());
 
   // ✅ 画面表示時・フォーカス時に支出＆カテゴリーを読み込み
   useFocusEffect(
