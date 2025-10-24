@@ -44,6 +44,11 @@ export default function HomeScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
 
+  const [isIncomeMode, setIsIncomeMode] = useState(false);
+  const targetStorageKey = isIncomeMode
+    ? STORAGE_KEYS.INCOMES
+    : STORAGE_KEYS.EXPENSES;
+
   const { theme } = useTheme();
   const c = colors[theme];
 
@@ -78,29 +83,34 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  const handleAddExpense = async () => {
+  const handleAddExpenseOrIncome = async () => {
     if (!expense || !category) return;
     try {
       const amount = parseFloat(expense);
-      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
+      const newId = await getNextId(targetStorageKey);
 
-      const newExpense = {
+      const newItem = {
         id: newId,
         amount,
         date: getTodayLocal(),
         categoryId: category.id,
       };
 
-      const newExpenses = await addItemToStorage(
-        STORAGE_KEYS.EXPENSES,
+      const newItems = await addItemToStorage(
+        targetStorageKey,
         expenses,
-        newExpense
+        newItem
       );
 
-      setExpenses(newExpenses);
+      setExpenses(newItems);
       setExpense("");
       setCategory(categories[0]);
       inputRef.current?.blur();
+
+      Alert.alert(
+        "保存完了",
+        `${isIncomeMode ? "収入" : "支出"}を保存しました`
+      );
     } catch (error) {
       console.error("保存エラー:", error);
       Alert.alert("エラー", "保存に失敗しました");
@@ -137,7 +147,45 @@ export default function HomeScreen() {
 
         {/* 支出登録 */}
         <View style={[styles.inputCard, { backgroundColor: c.card }]}>
-          <Text style={[styles.label, { color: c.text }]}>支出を登録</Text>
+          {/* トグルスイッチ */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => setIsIncomeMode(false)}
+              style={{
+                flex: 1,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: !isIncomeMode ? c.income : c.secondary,
+                marginRight: 4,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: !isIncomeMode ? "#fff" : c.text }}>
+                支出
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setIsIncomeMode(true)}
+              style={{
+                flex: 1,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: isIncomeMode ? c.income : c.secondary,
+                marginLeft: 4,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: isIncomeMode ? "#fff" : c.text }}>
+                収入
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.inputRow}>
             <TextInput
               ref={inputRef}
@@ -185,8 +233,11 @@ export default function HomeScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: c.success }]}
-            onPress={handleAddExpense}
+            style={[
+              styles.button,
+              { backgroundColor: isIncomeMode ? c.income : c.expense },
+            ]}
+            onPress={handleAddExpenseOrIncome}
           >
             <Text style={styles.buttonText}>登録</Text>
           </TouchableOpacity>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
 } from "react-native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import CalendarModal from "../components/CalenderModal";
@@ -46,11 +47,52 @@ export default function ExpenseScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [memo, setMemo] = useState("");
+  const [isIncomeMode, setIsIncomeMode] = useState(false);
 
   const { theme } = useTheme();
   const c = colors[theme];
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // ▼ フェード・色アニメーション設定
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const colorAnim = useRef(new Animated.Value(0)).current; // 0 = expense, 1 = income
+
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      // 初回レンダー時はアニメーションをスキップ
+      colorAnim.setValue(isIncomeMode ? 1 : 0);
+      firstRender.current = false;
+      return;
+    }
+
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(colorAnim, {
+          toValue: isIncomeMode ? 1 : 0,
+          duration: 250,
+          useNativeDriver: false,
+        }),
+      ]),
+    ]).start();
+  }, [isIncomeMode]);
+
+  const titleColor = colorAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [c.expense, c.income],
+  });
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () =>
@@ -196,28 +238,30 @@ export default function ExpenseScreen() {
   const handleConfirm = async () => {
     try {
       const amount = parseFloat(expression);
-      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
+      const storageKey = isIncomeMode
+        ? STORAGE_KEYS.INCOMES
+        : STORAGE_KEYS.EXPENSES; // 👈 切替
+
+      const newId = await getNextId(storageKey);
       if (isNaN(amount)) {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
-      const newExpense = {
+      const newItem = {
         id: newId,
         amount,
-        date: date,
-        categoryId: categoryId,
-        memo: memo,
+        date,
+        categoryId,
+        memo,
       };
-      const newExpenses = await addItemToStorage(
-        STORAGE_KEYS.EXPENSES,
-        expenses,
-        newExpense
+      const newItems = await addItemToStorage(storageKey, expenses, newItem);
+
+      setExpenses(newItems);
+
+      Alert.alert(
+        "保存完了",
+        `${isIncomeMode ? "収入" : "支出"}を保存しました`
       );
-
-      setExpenses(newExpenses);
-
-      Alert.alert("保存完了", `${categoryId}に支出を保存しました`);
-      console.log("保存データ:", newExpenses);
 
       setExpression("");
       setMemo("");
@@ -332,8 +376,21 @@ export default function ExpenseScreen() {
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View style={{ flex: 1, padding: 20 }}>
+          {/* ▼ 支出・収入 切り替えトグル */}
+          <View style={{ alignItems: "center", marginBottom: 10 }}>
+            <Animated.Text
+              style={{
+                fontSize: 22,
+                fontWeight: "bold",
+                opacity: fadeAnim,
+                color: titleColor,
+              }}
+            >
+              {isIncomeMode ? "収入を登録" : "支出を登録"}
+            </Animated.Text>
+          </View>
           {/* 上部：金額表示＋日付選択＋カテゴリー選択 */}
-          <View style={{ flex: 1.8, justifyContent: "flex-end" }}>
+          <View style={{ flex: 1.5, justifyContent: "flex-end" }}>
             <Text
               style={{
                 color: c.text,
@@ -422,6 +479,7 @@ export default function ExpenseScreen() {
                 onChangeText={setMemo}
               />
             </View>
+
             <CalendarModal
               visible={showPicker}
               date={date}
@@ -456,6 +514,41 @@ export default function ExpenseScreen() {
                 }}
               >
                 {row.map((btn) => {
+                  // 👇 ±ボタンを収入／支出トグルに置き換え
+                  if (btn === "±") {
+                    return (
+                      <TouchableOpacity
+                        key="incomeToggle"
+                        onPress={() => setIsIncomeMode((prev) => !prev)}
+                        activeOpacity={0.8}
+                        style={{
+                          flex: 1,
+                          margin: 5,
+                          aspectRatio: 1,
+                          borderRadius: 12, // 角丸四角
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: isIncomeMode ? c.income : c.expense, // 状態で色変更
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 3,
+                          elevation: 2,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: c.textOnAccent || "#fff",
+                            fontWeight: "bold",
+                            fontSize: 16,
+                          }}
+                        >
+                          {isIncomeMode ? "収入" : "支出"}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }
+
                   const isLastEqualBtn = btn === "=";
                   const displayBtn =
                     isLastEqualBtn && !calculating ? displayConfirmBtn : btn;
@@ -478,14 +571,13 @@ export default function ExpenseScreen() {
                         alignItems: "center",
                       }}
                       onPress={() => {
-                        // キーボードが開いている場合は閉じてから実行
                         if (keyboardVisible) {
                           Keyboard.dismiss();
                           setTimeout(() => {
                             if (displayBtn === displayConfirmBtn)
                               handleConfirm();
                             else handlePress(btn);
-                          }, 50); // 150ms後に実行（UX的にちょうど良い）
+                          }, 50);
                         } else {
                           if (displayBtn === displayConfirmBtn) handleConfirm();
                           else handlePress(btn);

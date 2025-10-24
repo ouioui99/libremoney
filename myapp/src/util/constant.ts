@@ -6,6 +6,8 @@ export const DEFAULT_CURRENCY = "JPY";
 export const STORAGE_KEYS = {
   EXPENSES: "expenses",
   EXPENSES_COUNTER: "expenses_next_id",
+  INCOMES: "incomes",
+  INCOMES_COUNTER: "incomes_next_id",
   CATEGORIES: "categories",
   CATEGORIES_COUNTER: "categories_next_id",
 };

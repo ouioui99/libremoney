@@ -3,6 +3,9 @@ export const colors = {
   light: {
     background: "#FDFDFD", // スクリーン全体の背景
     text: "#1A1A1A", // メインテキスト
+    income: "#22C55E", // 緑系
+    expense: "#F87171", // 赤系
+    textOnAccent: "#fff",
     accent: "#4a827f", // ボタンやリンクのアクセント
     secondary: "#b2d4cf", // カードやサブ背景
     card: "#E0F2F1", // カード背景
@@ -18,6 +21,9 @@ export const colors = {
   dark: {
     background: "#121212",
     text: "#FFFFFF",
+    income: "#4ADE80", // 緑系
+    expense: "#F87171", // 赤系
+    textOnAccent: "#fff",
     accent: "#4a827f",
     secondary: "#273a3a",
     card: "#1C2C2B",
