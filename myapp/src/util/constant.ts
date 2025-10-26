@@ -8,8 +8,10 @@ export const STORAGE_KEYS = {
   EXPENSES_COUNTER: "expenses_next_id",
   INCOMES: "incomes",
   INCOMES_COUNTER: "incomes_next_id",
-  CATEGORIES: "categories",
-  CATEGORIES_COUNTER: "categories_next_id",
+  EXPENSE_CATEGORIES: "expense_categories",
+  EXPENSE_CATEGORIES_COUNTER: "expense_categories_next_id",
+  INCOME_CATEGORIES: "income_categories",
+  INCOMES_CATEGORIES_COUNTER: "income_categories_next_id",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

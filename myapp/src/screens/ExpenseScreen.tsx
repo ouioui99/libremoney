@@ -29,11 +29,6 @@ import {
   handleCategoryReorder,
 } from "../util/categoryUtils";
 
-// 型ガード関数
-const isCategory = (v: NewCategoryInput | Category): v is Category => {
-  return (v as Category).id !== undefined && (v as Category).id !== "";
-};
-
 const displayConfirmBtn = "登録";
 
 export default function ExpenseScreen() {
@@ -44,6 +39,8 @@ export default function ExpenseScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [memo, setMemo] = useState("");
@@ -117,24 +114,37 @@ export default function ExpenseScreen() {
         );
         setExpenses(storedExpenses);
 
-        const storedCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.CATEGORIES
+        const storedExpenseCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.EXPENSE_CATEGORIES
         );
-        //テスト用
-        //AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
 
-        // order プロパティでソートして state にセット
-        const sorted = storedCategories.slice().sort((a, b) => {
-          const ao = Number(a.order ?? a.id ?? 0);
-          const bo = Number(b.order ?? b.id ?? 0);
-          return ao - bo;
-        });
-        setCategories(sorted);
+        const storeIncomeCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.INCOME_CATEGORIES
+        );
+
+        // order プロパティでソート
+        const sortedExpenseCategories = (storedExpenseCategories || [])
+          .slice()
+          .sort((a, b) => {
+            const ao = Number(a.order ?? a.id ?? 0);
+            const bo = Number(b.order ?? b.id ?? 0);
+            return ao - bo;
+          });
+
+        const sortedIncomeCategories = (storeIncomeCategories || [])
+          .slice()
+          .sort((a, b) => {
+            const ao = Number(a.order ?? a.id ?? 0);
+            const bo = Number(b.order ?? b.id ?? 0);
+            return ao - bo;
+          });
+        setExpenseCategories(sortedExpenseCategories);
+        setIncomeCategories(sortedIncomeCategories);
       } catch (e) {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, []);
+  }, [isIncomeMode]);
 
   // 電卓ボタン押下処理
   const handlePress = (val: string) => {
@@ -272,105 +282,10 @@ export default function ExpenseScreen() {
     }
   };
 
-  //   category: NewCategoryInput | Category
-  // ) => {
-  //   // 編集 or 追加を判定して保存処理
-  //   // category が Category 型なら編集、NewCategoryInput 型なら新規追加
-  //   if (isCategory(category)) {
-  //     // 編集
-  //     try {
-  //       const id = category.id;
-
-  //       const newCategory = {
-  //         id: id,
-  //         name: category.name,
-  //         icon: category.icon as keyof typeof Ionicons.glyphMap,
-  //         order: category.order,
-  //       };
-
-  //       const updatedCategories = await editItemInStorage<Category>(
-  //         STORAGE_KEYS.CATEGORIES,
-  //         (item) => item.id === id,
-  //         categories,
-  //         newCategory as unknown as Category
-  //       );
-
-  //       setCategories(updatedCategories);
-  //     } catch (e) {
-  //       console.error("カテゴリ編集保存エラー:", e);
-  //     }
-  //     return;
-  //   } else {
-  //     // 新規追加
-  //     const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
-
-  //     const newCategory = {
-  //       id: newId,
-  //       // 末尾に追加するので現在の件数＋1 を order にする
-  //       order: String((categories?.length ?? 0) + 1),
-  //       icon: category.icon as keyof typeof Ionicons.glyphMap,
-  //       name: category.name,
-  //     };
-
-  //     const newCategories = await addItemToStorage(
-  //       STORAGE_KEYS.CATEGORIES,
-  //       categories,
-  //       newCategory
-  //     );
-
-  //     setCategories(newCategories);
-  //   }
-  // };
-
-  // 親で削除を処理（ストレージと state を更新）
-  // const handleCategoryDelete = (id: string) => {
-  //   Alert.alert(
-  //     "確認",
-  //     "このカテゴリを削除しますか？",
-  //     [
-  //       {
-  //         text: "キャンセル",
-  //         style: "cancel",
-  //       },
-  //       {
-  //         text: "削除",
-  //         style: "destructive",
-  //         onPress: async () => {
-  //           try {
-  //             const updated = await removeItemFromStorage<Category>(
-  //               STORAGE_KEYS.CATEGORIES,
-  //               (item) => item.id === id
-  //             );
-  //             setCategories(updated);
-  //           } catch (e) {
-  //             console.error("カテゴリ削除エラー:", e);
-  //           }
-  //         },
-  //       },
-  //     ],
-  //     { cancelable: true }
-  //   );
-  // };
-
-  // 並び替えを親で受けて保存
-  // const handleCategoryReorder = async (newList: Category[]) => {
-  //   try {
-  //     // 各要素に order を振り直す（1始まり）
-  //     const updated = newList.map((cat, idx) => ({
-  //       ...cat,
-  //       order: String(idx + 1),
-  //     }));
-  //     await AsyncStorage.setItem(
-  //       STORAGE_KEYS.CATEGORIES,
-  //       JSON.stringify(updated)
-  //     );
-  //     setCategories(updated);
-  //   } catch (e) {
-  //     console.error("カテゴリ並び替え保存エラー:", e);
-  //   }
-  // };
-
-  const selectedCategory = getCategory(categories, categoryId);
+  const selectedCategory = getCategory(
+    isIncomeMode ? incomeCategories : expenseCategories,
+    categoryId
+  );
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
@@ -490,8 +405,10 @@ export default function ExpenseScreen() {
 
           {/* カテゴリーセレクター */}
           <CategorySelector
-            categories={categories}
-            setCategories={setCategories}
+            categories={isIncomeMode ? incomeCategories : expenseCategories}
+            setCategories={
+              isIncomeMode ? setIncomeCategories : setExpenseCategories
+            }
             selectedCategoryId={categoryId}
             onSelect={(id: string) => setCategoryId(id)}
             onReorder={handleCategoryReorder}
@@ -501,6 +418,7 @@ export default function ExpenseScreen() {
             setShowCategoryModal={setShowCategoryModal}
             showCategoryListModal={showCategoryListModal}
             setShowCategoryListModal={setShowCategoryListModal}
+            type={isIncomeMode ? "income" : "expense"}
           />
 
           {/* 下部：電卓ボタン */}

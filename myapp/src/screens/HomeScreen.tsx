@@ -38,8 +38,10 @@ export default function HomeScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const inputRef = useRef<TextInput>(null);
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState<Category>(categories[0]);
+  const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState<Category>();
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -62,26 +64,41 @@ export default function HomeScreen() {
         );
         setExpenses(storedExpenses || []);
 
-        const storedCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.CATEGORIES
+        const storedExpenseCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.EXPENSE_CATEGORIES
+        );
+
+        const storeIncomeCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.INCOME_CATEGORIES
         );
 
         // order プロパティでソート
-        const sorted = (storedCategories || []).slice().sort((a, b) => {
-          const ao = Number(a.order ?? a.id ?? 0);
-          const bo = Number(b.order ?? b.id ?? 0);
-          return ao - bo;
-        });
-        setCategories(sorted);
+        const sortedExpenseCategories = (storedExpenseCategories || [])
+          .slice()
+          .sort((a, b) => {
+            const ao = Number(a.order ?? a.id ?? 0);
+            const bo = Number(b.order ?? b.id ?? 0);
+            return ao - bo;
+          });
 
-        if (sorted.length > 0) {
-          setCategory(sorted[0]);
+        const sortedIncomeCategories = (storeIncomeCategories || [])
+          .slice()
+          .sort((a, b) => {
+            const ao = Number(a.order ?? a.id ?? 0);
+            const bo = Number(b.order ?? b.id ?? 0);
+            return ao - bo;
+          });
+        setExpenseCategories(sortedExpenseCategories);
+        setIncomeCategories(sortedIncomeCategories);
+
+        if (sortedExpenseCategories.length > 0) {
+          setCategory(sortedExpenseCategories[0]);
         }
       } catch (e) {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, []);
+  }, [isIncomeMode]);
 
   const handleAddExpenseOrIncome = async () => {
     if (!expense || !category) return;
@@ -104,7 +121,7 @@ export default function HomeScreen() {
 
       setExpenses(newItems);
       setExpense("");
-      setCategory(categories[0]);
+      setCategory(undefined);
       inputRef.current?.blur();
 
       Alert.alert(
@@ -120,7 +137,7 @@ export default function HomeScreen() {
   /** ✅ カテゴリーごとの合計金額を算出 */
   const categoryTotals = useMemo(() => {
     const totals: Record<string, number> = {};
-    categories.forEach((cat) => (totals[cat.id] = 0));
+    expenseCategories.forEach((cat) => (totals[cat.id] = 0));
 
     expenses.forEach((e) => {
       const catId = e.categoryId;
@@ -130,7 +147,7 @@ export default function HomeScreen() {
     });
 
     return totals;
-  }, [expenses, categories]);
+  }, [expenses, expenseCategories]);
 
   const maxAmount = Math.max(...Object.values(categoryTotals), 1);
 
@@ -199,7 +216,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.buttonRow}>
-            {categories.slice(0, 5).map((cat) => (
+            {filteredCategories.slice(0, 5).map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 style={[
@@ -250,7 +267,7 @@ export default function HomeScreen() {
           </Text>
 
           <FlatList
-            data={categories}
+            data={expenseCategories}
             keyExtractor={(item) => item.id}
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
@@ -314,8 +331,10 @@ export default function HomeScreen() {
         </View>
         {/* カテゴリーセレクター */}
         <CategorySelector
-          categories={categories}
-          setCategories={setCategories}
+          categories={isIncomeMode ? incomeCategories : expenseCategories}
+          setCategories={
+            isIncomeMode ? setIncomeCategories : setExpenseCategories
+          }
           selectedCategoryId={categoryId}
           onSelect={(id: string) => setCategoryId(id)}
           onReorder={handleCategoryReorder}
@@ -325,6 +344,7 @@ export default function HomeScreen() {
           setShowCategoryModal={setShowCategoryModal}
           showCategoryListModal={showCategoryListModal}
           setShowCategoryListModal={setShowCategoryListModal}
+          type={isIncomeMode ? "income" : "expense"}
         />
       </View>
     </SafeAreaLayout>

@@ -24,21 +24,26 @@ interface Props {
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   onClose: () => void;
   categories: Category[];
+  fileterdCategories: Category[];
   onDelete: (
     id: string,
-    setCategories: (value: React.SetStateAction<Category[]>) => void
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    type: "expense" | "income"
   ) => void;
   onReorder: (
     newList: Category[],
-    setCategories: (value: React.SetStateAction<Category[]>) => void
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    type: "expense" | "income"
   ) => Promise<void>;
   showCategoryEditModal: boolean;
   setShowCategoryEditModal: React.Dispatch<React.SetStateAction<boolean>>;
   handleCategoryEditOnsave: (
     categories: Category[],
     setCategories: (value: React.SetStateAction<Category[]>) => void,
-    category: NewCategoryInput | Category
+    category: NewCategoryInput | Category,
+    type: "expense" | "income"
   ) => Promise<void>;
+  type: "expense" | "income";
 }
 
 export default function CategoryListModal({
@@ -46,11 +51,13 @@ export default function CategoryListModal({
   setCategories,
   onClose,
   categories,
+  fileterdCategories,
   onDelete,
   onReorder,
   showCategoryEditModal,
   setShowCategoryEditModal,
   handleCategoryEditOnsave,
+  type,
 }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -83,7 +90,7 @@ export default function CategoryListModal({
               <Text style={{ color: "#fff", fontSize: 16 }}>閉じる</Text>
             </TouchableOpacity>
             <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>
-              カテゴリー編集
+              {type === "expense" ? "支出カテゴリー管理" : "収入カテゴリー管理"}
             </Text>
             <View style={{ width: 50 }} />
           </View>
@@ -91,7 +98,7 @@ export default function CategoryListModal({
           {/* リスト */}
           <DraggableFlatList
             style={{ marginTop: 10, marginBottom: 55 }}
-            data={categories}
+            data={fileterdCategories}
             keyExtractor={(item) => item.id}
             onDragEnd={({ data }) => {
               // 1) UI を即時更新してチラつきを防ぐ
@@ -102,7 +109,7 @@ export default function CategoryListModal({
               setCategories(updated);
 
               // 2) 親に永続化を委譲（非同期）：失敗したらログ（必要ならロールバックを実装）
-              const res = onReorder(updated, setCategories);
+              const res = onReorder(updated, setCategories, type);
               if (res && typeof (res as Promise<void>).catch === "function") {
                 (res as Promise<void>).catch((e) =>
                   console.error("カテゴリ並び替え保存エラー:", e)
@@ -114,8 +121,6 @@ export default function CategoryListModal({
                 <TouchableOpacity
                   activeOpacity={0.7}
                   onLongPress={async () => {
-                    console.log("ddd");
-
                     await Haptics.impactAsync(
                       Haptics.ImpactFeedbackStyle.Medium
                     );
@@ -137,7 +142,7 @@ export default function CategoryListModal({
                 >
                   {/* 左：削除ボタン */}
                   <Pressable
-                    onPress={() => onDelete(item.id, setCategories)}
+                    onPress={() => onDelete(item.id, setCategories, type)}
                     style={{ marginRight: 12, padding: 4 }}
                   >
                     <Ionicons name="remove-circle" size={22} color={c.error} />
@@ -191,12 +196,18 @@ export default function CategoryListModal({
             visible={showCategoryEditModal}
             onClose={() => setShowCategoryEditModal(false)}
             onSave={(category) => {
-              handleCategoryEditOnsave(categories, setCategories, category);
+              handleCategoryEditOnsave(
+                categories,
+                setCategories,
+                category,
+                type
+              );
               setShowCategoryEditModal(false);
               setEditingCategory(null);
             }}
             // 🟩 編集時は初期値を渡す
             initialCategory={editingCategory ? editingCategory : undefined}
+            type={type}
           />
         </View>
       </SafeAreaLayout>

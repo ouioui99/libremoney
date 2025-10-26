@@ -12,6 +12,7 @@ export interface Category {
 export interface NewCategoryInput {
   name: string;
   icon: string;
+  type: "expense" | "income";
 }
 
 export interface Expense {

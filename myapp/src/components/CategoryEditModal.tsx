@@ -28,6 +28,7 @@ interface CategoryModalProps {
   onClose: () => void;
   onSave: (category: NewCategoryInput | Category) => void;
   initialCategory?: Category;
+  type: "expense" | "income";
 }
 
 const CategoryEditModal: React.FC<CategoryModalProps> = ({
@@ -35,6 +36,7 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
   onClose,
   onSave,
   initialCategory,
+  type,
 }) => {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -61,9 +63,14 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
   const handleSave = () => {
     if (!name.trim() || !selectedIcon) return;
     if (initialCategory) {
-      onSave({ ...initialCategory, icon: selectedIcon, name: name.trim() });
+      onSave({
+        ...initialCategory,
+        icon: selectedIcon,
+        name: name.trim(),
+        type: type,
+      });
     } else {
-      onSave({ icon: selectedIcon, name: name.trim() });
+      onSave({ icon: selectedIcon, name: name.trim(), type: type });
     }
 
     setName("");
@@ -92,7 +99,9 @@ const CategoryEditModal: React.FC<CategoryModalProps> = ({
           >
             <View style={[styles.container, { backgroundColor: c.background }]}>
               <Text style={[styles.title, { color: c.text }]}>
-                カテゴリーを追加
+                {type === "income"
+                  ? "収入カテゴリーを追加"
+                  : "支出カテゴリーを追加"}
               </Text>
 
               {/* アイコン選択 */}

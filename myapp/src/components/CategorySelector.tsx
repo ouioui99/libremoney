@@ -8,6 +8,8 @@ import { Category, NewCategoryInput } from "../types/models";
 import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
 
+//カテゴリーのincomeとexpenseの切り替え中！！
+
 interface CategorySelectorProps {
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
@@ -15,21 +17,25 @@ interface CategorySelectorProps {
   onSelect: (categoryId: string) => void;
   onReorder: (
     newList: Category[],
-    setCategories: (value: React.SetStateAction<Category[]>) => void
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    type: "expense" | "income"
   ) => Promise<void>;
   onDelete: (
     id: string,
-    setCategories: (value: React.SetStateAction<Category[]>) => void
+    setCategories: (value: React.SetStateAction<Category[]>) => void,
+    type: "expense" | "income"
   ) => void;
   onEditSave: (
     categories: Category[],
     setCategories: (value: React.SetStateAction<Category[]>) => void,
-    category: NewCategoryInput | Category
+    category: NewCategoryInput | Category,
+    type: "expense" | "income"
   ) => Promise<void>;
   showCategoryModal: boolean;
   setShowCategoryModal: React.Dispatch<React.SetStateAction<boolean>>;
   showCategoryListModal: boolean;
   setShowCategoryListModal: React.Dispatch<React.SetStateAction<boolean>>;
+  type: "expense" | "income";
 }
 
 export default function CategorySelector({
@@ -44,14 +50,9 @@ export default function CategorySelector({
   setShowCategoryModal,
   showCategoryListModal,
   setShowCategoryListModal,
+  type,
 }: CategorySelectorProps) {
   const [showCategoryEditModal, setShowCategoryEditModal] = useState(false);
-
-  const { theme } = useTheme();
-  const c = colors[theme];
-
-  const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
-
   return (
     <View>
       {/* モーダル群 */}
@@ -73,12 +74,14 @@ export default function CategorySelector({
         visible={showCategoryListModal}
         setCategories={setCategories}
         categories={categories}
+        fileterdCategories={categories}
         onClose={() => setShowCategoryListModal(false)}
         onDelete={onDelete}
         onReorder={onReorder}
         showCategoryEditModal={showCategoryEditModal}
         setShowCategoryEditModal={setShowCategoryEditModal}
         handleCategoryEditOnsave={onEditSave}
+        type={type}
       />
     </View>
   );

@@ -18,7 +18,8 @@ const isCategory = (v: NewCategoryInput | Category): v is Category => {
 // 並び替えを親で受けて保存
 export const handleCategoryReorder = async (
   newList: Category[],
-  setCategories: (value: React.SetStateAction<Category[]>) => void
+  setCategories: (value: React.SetStateAction<Category[]>) => void,
+  type: "expense" | "income"
 ) => {
   try {
     // 各要素に order を振り直す（1始まり）
@@ -27,7 +28,9 @@ export const handleCategoryReorder = async (
       order: String(idx + 1),
     }));
     await AsyncStorage.setItem(
-      STORAGE_KEYS.CATEGORIES,
+      type === "expense"
+        ? STORAGE_KEYS.EXPENSE_CATEGORIES
+        : STORAGE_KEYS.INCOME_CATEGORIES,
       JSON.stringify(updated)
     );
     setCategories(updated);
@@ -39,7 +42,8 @@ export const handleCategoryReorder = async (
 // 親で削除を処理（ストレージと state を更新）
 export const handleCategoryDelete = (
   id: string,
-  setCategories: (value: React.SetStateAction<Category[]>) => void
+  setCategories: (value: React.SetStateAction<Category[]>) => void,
+  type: "expense" | "income"
 ) => {
   Alert.alert(
     "確認",
@@ -55,7 +59,9 @@ export const handleCategoryDelete = (
         onPress: async () => {
           try {
             const updated = await removeItemFromStorage<Category>(
-              STORAGE_KEYS.CATEGORIES,
+              type === "expense"
+                ? STORAGE_KEYS.EXPENSE_CATEGORIES
+                : STORAGE_KEYS.INCOME_CATEGORIES,
               (item) => item.id === id
             );
             setCategories(updated);
@@ -72,7 +78,8 @@ export const handleCategoryDelete = (
 export const handleCategoryEditOnSave = async (
   categories: Category[],
   setCategories: (value: React.SetStateAction<Category[]>) => void,
-  category: NewCategoryInput | Category
+  category: NewCategoryInput | Category,
+  type: "expense" | "income"
 ) => {
   // 編集 or 追加を判定して保存処理
   // category が Category 型なら編集、NewCategoryInput 型なら新規追加
@@ -89,7 +96,9 @@ export const handleCategoryEditOnSave = async (
       };
 
       const updatedCategories = await editItemInStorage<Category>(
-        STORAGE_KEYS.CATEGORIES,
+        type === "expense"
+          ? STORAGE_KEYS.EXPENSE_CATEGORIES
+          : STORAGE_KEYS.INCOME_CATEGORIES,
         (item) => item.id === id,
         categories,
         newCategory as unknown as Category
@@ -102,7 +111,11 @@ export const handleCategoryEditOnSave = async (
     return;
   } else {
     // 新規追加
-    const newId = await getNextId(STORAGE_KEYS.CATEGORIES);
+    const newId = await getNextId(
+      type === "expense"
+        ? STORAGE_KEYS.EXPENSE_CATEGORIES
+        : STORAGE_KEYS.INCOME_CATEGORIES
+    );
 
     const newCategory = {
       id: newId,
@@ -110,10 +123,13 @@ export const handleCategoryEditOnSave = async (
       order: String((categories?.length ?? 0) + 1),
       icon: category.icon as keyof typeof Ionicons.glyphMap,
       name: category.name,
+      type: category.type,
     };
 
     const newCategories = await addItemToStorage(
-      STORAGE_KEYS.CATEGORIES,
+      type === "expense"
+        ? STORAGE_KEYS.EXPENSE_CATEGORIES
+        : STORAGE_KEYS.INCOME_CATEGORIES,
       categories,
       newCategory
     );
