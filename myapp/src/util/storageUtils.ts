@@ -1,3 +1,4 @@
+import { boolean } from "./../../node_modules/zod/src/v4/core/regexes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { STORAGE_KEYS } from "./constant";
 
@@ -109,8 +110,16 @@ export async function getNextExpenseId(): Promise<string> {
 /**
  * 互換ラッパー: expenses 用の次のIDを取得
  */
-export async function getNextCategoryId(): Promise<string> {
-  const itemsKey = STORAGE_KEYS?.CATEGORIES ?? "categories";
-  const counterKey = STORAGE_KEYS?.CATEGORIES_COUNTER ?? `${itemsKey}_next_id`;
+export async function getNextCategoryId(isInomeMode: boolean): Promise<string> {
+  let itemsKey: string;
+  let counterKey: string;
+  if (isInomeMode) {
+    itemsKey = STORAGE_KEYS?.INCOMES ?? "incomes";
+    counterKey = STORAGE_KEYS?.INCOMES_COUNTER ?? `${itemsKey}_next_id`;
+  } else {
+    itemsKey = STORAGE_KEYS?.EXPENSES ?? "expenses";
+    counterKey = STORAGE_KEYS?.EXPENSES_COUNTER ?? `${itemsKey}_next_id`;
+  }
+
   return getNextId(itemsKey, counterKey);
 }

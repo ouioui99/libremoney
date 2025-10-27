@@ -27,6 +27,7 @@ import {
 } from "../util/categoryUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { getTodayLocal } from "../util/dateUtils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const targetSavings = 500000;
@@ -40,8 +41,10 @@ export default function HomeScreen() {
 
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState<Category>();
-  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category>();
+  const [displaiedCategories, setDisplaiedCategories] = useState<Category[]>(
+    []
+  );
   const [categoryId, setCategoryId] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -57,6 +60,12 @@ export default function HomeScreen() {
   const progress = (totalDays - remainingDays) / totalDays;
 
   useEffect(() => {
+    //開発用
+    // AsyncStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify([]));
+    // AsyncStorage.setItem(STORAGE_KEYS.INCOME_CATEGORIES, JSON.stringify([]));
+    // AsyncStorage.setItem("categories", JSON.stringify([]));
+    // AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
+
     (async () => {
       try {
         const storedExpenses = await getItemsFromStorage<Expense>(
@@ -88,29 +97,37 @@ export default function HomeScreen() {
             const bo = Number(b.order ?? b.id ?? 0);
             return ao - bo;
           });
-        setExpenseCategories(sortedExpenseCategories);
-        setIncomeCategories(sortedIncomeCategories);
 
         if (sortedExpenseCategories.length > 0) {
-          setCategory(sortedExpenseCategories[0]);
+          setExpenseCategories(sortedExpenseCategories);
+        }
+
+        if (sortedIncomeCategories.length > 0) {
+          setIncomeCategories(sortedIncomeCategories);
+        }
+
+        if (isIncomeMode) {
+          setDisplaiedCategories(sortedIncomeCategories);
+        } else {
+          setDisplaiedCategories(sortedExpenseCategories);
         }
       } catch (e) {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, [isIncomeMode]);
+  }, [isIncomeMode, showCategoryListModal]);
 
   const handleAddExpenseOrIncome = async () => {
-    if (!expense || !category) return;
+    if (!expense || !selectedCategory) return;
     try {
       const amount = parseFloat(expense);
-      const newId = await getNextId(targetStorageKey);
+      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
 
       const newItem = {
         id: newId,
         amount,
         date: getTodayLocal(),
-        categoryId: category.id,
+        categoryId: selectedCategory.id,
       };
 
       const newItems = await addItemToStorage(
@@ -121,7 +138,7 @@ export default function HomeScreen() {
 
       setExpenses(newItems);
       setExpense("");
-      setCategory(undefined);
+      setSelectedCategory(undefined);
       inputRef.current?.blur();
 
       Alert.alert(
@@ -216,24 +233,24 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.buttonRow}>
-            {filteredCategories.slice(0, 5).map((cat) => (
+            {displaiedCategories.slice(0, 5).map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 style={[
                   styles.categoryButton,
                   {
                     backgroundColor:
-                      category?.id === cat.id ? c.accent : c.secondary,
+                      selectedCategory?.id === cat.id ? c.accent : c.secondary,
                   },
                 ]}
-                onPress={() => setCategory(cat)}
+                onPress={() => setSelectedCategory(cat)}
               >
                 <Text
                   style={[
                     styles.buttonText,
                     {
                       fontSize: 14,
-                      color: category?.id === cat.id ? "#fff" : c.text,
+                      color: selectedCategory?.id === cat.id ? "#fff" : c.text,
                     },
                   ]}
                 >

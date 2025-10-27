@@ -29,7 +29,8 @@ export default function BudgetScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayLocal());
 
   // ✅ 画面表示時・フォーカス時に支出＆カテゴリーを読み込み
@@ -37,12 +38,18 @@ export default function BudgetScreen() {
     useCallback(() => {
       const loadData = async () => {
         try {
-          const [storedExpenses, storedCategories] = await Promise.all([
+          const [
+            storedExpenses,
+            storedExpenseCategories,
+            storedIncomeCategories,
+          ] = await Promise.all([
             getItemsFromStorage<Expense>(STORAGE_KEYS.EXPENSES),
-            getItemsFromStorage<Category>(STORAGE_KEYS.CATEGORIES),
+            getItemsFromStorage<Category>(STORAGE_KEYS.EXPENSE_CATEGORIES),
+            getItemsFromStorage<Category>(STORAGE_KEYS.INCOME_CATEGORIES),
           ]);
           setExpenses(storedExpenses);
-          setCategories(storedCategories);
+          setExpenseCategories(storedExpenseCategories);
+          setIncomeCategories(storedIncomeCategories);
         } catch (e) {
           console.error("データ読み込みエラー:", e);
         }
@@ -123,7 +130,8 @@ export default function BudgetScreen() {
           keyExtractor={(item) => item.id}
           style={{ flex: 1 }}
           renderItem={({ item, index }) => {
-            const category = getCategory(categories, item.categoryId);
+            const category = getCategory(expenseCategories, item.categoryId);
+
             return (
               <TouchableOpacity
                 onPress={() => {

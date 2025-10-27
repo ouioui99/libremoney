@@ -38,7 +38,6 @@ export default function ExpenseScreen() {
   const [calculating, setCalculating] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -144,7 +143,7 @@ export default function ExpenseScreen() {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, [isIncomeMode]);
+  }, [isIncomeMode, showCategoryModal]);
 
   // 電卓ボタン押下処理
   const handlePress = (val: string) => {
@@ -257,6 +256,7 @@ export default function ExpenseScreen() {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
+
       const newItem = {
         id: newId,
         amount,
