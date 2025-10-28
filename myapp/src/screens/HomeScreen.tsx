@@ -8,6 +8,9 @@ import {
   StyleSheet,
   FlatList,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
 } from "react-native";
 import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
@@ -172,111 +175,163 @@ export default function HomeScreen() {
     <SafeAreaLayout style={{ backgroundColor: c.background, flex: 1 }}>
       <View style={{ flex: 1, padding: 16 }}>
         {/* 今日使える金額 */}
-        <View style={[styles.card, { backgroundColor: c.card }]}>
-          <Text style={[styles.label, { color: c.text }]}>今日使える金額</Text>
-          <Text style={[styles.mainAmount, { color: c.accent }]}>
-            ¥{todayUsable.toLocaleString()}
-          </Text>
-        </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={[styles.card, { backgroundColor: c.card }]}>
+            <Text style={[styles.label, { color: c.text }]}>
+              今日使える金額
+            </Text>
+            <Text style={[styles.mainAmount, { color: c.accent }]}>
+              ¥{todayUsable.toLocaleString()}
+            </Text>
+          </View>
+        </TouchableWithoutFeedback>
 
-        {/* 支出登録 */}
-        <View style={[styles.inputCard, { backgroundColor: c.card }]}>
-          {/* トグルスイッチ */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => setIsIncomeMode(false)}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          {/* 支出登録 */}
+          <View style={[styles.inputCard, { backgroundColor: c.card }]}>
+            {/* トグルスイッチ */}
+            <View
               style={{
-                flex: 1,
-                padding: 8,
-                borderRadius: 8,
-                backgroundColor: !isIncomeMode ? c.income : c.secondary,
-                marginRight: 4,
-                alignItems: "center",
+                flexDirection: "row",
+                justifyContent: "center",
               }}
             >
-              <Text style={{ color: !isIncomeMode ? "#fff" : c.text }}>
-                支出
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setIsIncomeMode(true)}
-              style={{
-                flex: 1,
-                padding: 8,
-                borderRadius: 8,
-                backgroundColor: isIncomeMode ? c.income : c.secondary,
-                marginLeft: 4,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: isIncomeMode ? "#fff" : c.text }}>
-                収入
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputRow}>
-            <TextInput
-              ref={inputRef}
-              style={[styles.input, { borderColor: c.border, color: c.text }]}
-              placeholder="金額を入力"
-              placeholderTextColor={c.placeholder}
-              keyboardType="numeric"
-              value={expense}
-              onChangeText={setExpense}
-            />
-          </View>
-
-          <View style={styles.buttonRow}>
-            {displaiedCategories.slice(0, 5).map((cat) => (
               <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.categoryButton,
-                  {
-                    backgroundColor:
-                      selectedCategory?.id === cat.id ? c.accent : c.secondary,
-                  },
-                ]}
-                onPress={() => setSelectedCategory(cat)}
+                onPress={() => setIsIncomeMode(false)}
+                style={{
+                  flex: 1,
+                  padding: 8,
+                  borderRadius: 8,
+                  backgroundColor: !isIncomeMode ? c.income : c.secondary,
+                  marginRight: 4,
+                  alignItems: "center",
+                }}
               >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    {
-                      fontSize: 14,
-                      color: selectedCategory?.id === cat.id ? "#fff" : c.text,
-                    },
-                  ]}
-                >
-                  {cat.name}
+                <Text style={{ color: !isIncomeMode ? "#fff" : c.text }}>
+                  支出
                 </Text>
               </TouchableOpacity>
-            ))}
+              <TouchableOpacity
+                onPress={() => setIsIncomeMode(true)}
+                style={{
+                  flex: 1,
+                  padding: 8,
+                  borderRadius: 8,
+                  backgroundColor: isIncomeMode ? c.income : c.secondary,
+                  marginLeft: 4,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: isIncomeMode ? "#fff" : c.text }}>
+                  収入
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputRow}>
+              <TextInput
+                ref={inputRef}
+                style={[styles.input, { borderColor: c.border, color: c.text }]}
+                placeholder="金額を入力"
+                placeholderTextColor={c.placeholder}
+                keyboardType="numeric"
+                value={expense}
+                onChangeText={setExpense}
+              />
+            </View>
+
+            <View style={styles.buttonRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: 8 }} // 端の余白を少し追加
+              >
+                {displaiedCategories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.categoryButton,
+                      {
+                        backgroundColor:
+                          selectedCategory?.id === cat.id
+                            ? c.accent
+                            : c.secondary,
+                      },
+                    ]}
+                    onPress={() => setSelectedCategory(cat)}
+                  >
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        {
+                          fontSize: 14,
+                          color:
+                            selectedCategory?.id === cat.id ? "#fff" : c.text,
+                        },
+                      ]}
+                    >
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+
+                <TouchableOpacity
+                  style={[
+                    styles.categoryButton,
+                    { backgroundColor: c.secondary },
+                  ]}
+                  onPress={() => setShowCategoryModal(true)}
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={20}
+                    color={c.text}
+                  />
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+
             <TouchableOpacity
-              style={[styles.categoryButton, { backgroundColor: c.secondary }]}
-              onPress={() => setShowCategoryModal(true)}
+              style={[
+                styles.button,
+                { backgroundColor: isIncomeMode ? c.income : c.expense },
+              ]}
+              onPress={handleAddExpenseOrIncome}
             >
-              <Ionicons name="ellipsis-horizontal" size={20} color={c.text} />
+              <Text style={styles.buttonText}>登録</Text>
             </TouchableOpacity>
           </View>
+        </TouchableWithoutFeedback>
+        {/* 目標貯金額 + 残り日数 */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={[styles.card, { backgroundColor: c.card }]}>
+            <Text style={[styles.label, { color: c.text }]}>目標貯金額</Text>
+            <Text style={[styles.subAmount, { color: c.text }]}>
+              ¥{targetSavings.toLocaleString()}
+            </Text>
 
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: isIncomeMode ? c.income : c.expense },
-            ]}
-            onPress={handleAddExpenseOrIncome}
-          >
-            <Text style={styles.buttonText}>登録</Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={[styles.label, { marginTop: 12, color: c.text }]}>
+              残り日数
+            </Text>
+            <Text style={[styles.subAmount, { color: c.text }]}>
+              {remainingDays}日
+            </Text>
 
+            <View
+              style={[
+                styles.progressContainer,
+                { backgroundColor: c.secondary },
+              ]}
+            >
+              <View
+                style={[
+                  styles.progressBar,
+                  { width: `${progress * 100}%`, backgroundColor: c.accent },
+                ]}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
         {/* ✅ カテゴリー別支出 */}
         <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>
@@ -319,32 +374,6 @@ export default function HomeScreen() {
               </View>
             )}
           />
-        </View>
-
-        {/* 目標貯金額 + 残り日数 */}
-        <View style={[styles.card, { backgroundColor: c.card }]}>
-          <Text style={[styles.label, { color: c.text }]}>目標貯金額</Text>
-          <Text style={[styles.subAmount, { color: c.text }]}>
-            ¥{targetSavings.toLocaleString()}
-          </Text>
-
-          <Text style={[styles.label, { marginTop: 12, color: c.text }]}>
-            残り日数
-          </Text>
-          <Text style={[styles.subAmount, { color: c.text }]}>
-            {remainingDays}日
-          </Text>
-
-          <View
-            style={[styles.progressContainer, { backgroundColor: c.secondary }]}
-          >
-            <View
-              style={[
-                styles.progressBar,
-                { width: `${progress * 100}%`, backgroundColor: c.accent },
-              ]}
-            />
-          </View>
         </View>
         {/* カテゴリーセレクター */}
         <CategorySelector
@@ -423,7 +452,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    marginRight: 8,
+    marginRight: 5,
     marginBottom: 8,
   },
   button: {
