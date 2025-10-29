@@ -12,7 +12,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }: any) {
   const { theme, setMode, mode } = useTheme();
   const c = colors[theme];
   const [isDarkMode, setIsDarkMode] = useState(mode === "dark");
@@ -23,7 +23,7 @@ export default function SettingsScreen() {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleTargetSettings = () => console.log("収入設定を開く");
+  const handleTargetSettings = () => navigation.navigate("SavingsGoal");
   const handleIncomeSettings = () => console.log("収入設定を開く");
   const handleRegularExpenseSettings = () => console.log("定期支出設定を開く");
 

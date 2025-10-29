@@ -4,6 +4,7 @@ import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider } from "./src/contexts/ThemeContext";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
   return (
@@ -11,7 +12,7 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ThemeProvider>
           <NavigationContainer>
-            <BottomTabNavigator />
+            <AppNavigator />
           </NavigationContainer>
         </ThemeProvider>
       </GestureHandlerRootView>
