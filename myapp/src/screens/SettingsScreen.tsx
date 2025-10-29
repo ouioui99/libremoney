@@ -23,6 +23,7 @@ export default function SettingsScreen() {
     setIsDarkMode(!isDarkMode);
   };
 
+  const handleTargetSettings = () => console.log("収入設定を開く");
   const handleIncomeSettings = () => console.log("収入設定を開く");
   const handleRegularExpenseSettings = () => console.log("定期支出設定を開く");
 
@@ -37,11 +38,22 @@ export default function SettingsScreen() {
 
   const sections: { title: string; data: SettingsItem[] }[] = [
     {
+      title: "目標設定",
+      data: [
+        {
+          key: "target",
+          label: "貯金目標を設定",
+          type: "link",
+          onPress: handleTargetSettings,
+        },
+      ],
+    },
+    {
       title: "収入・支出設定",
       data: [
         {
-          key: "income",
-          label: "月収を設定",
+          key: "regular-income",
+          label: "定期的な収入を設定",
           type: "link",
           onPress: handleIncomeSettings,
         },
