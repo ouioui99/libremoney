@@ -1,4 +1,3 @@
-// screens/SavingsGoalScreen.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -7,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
@@ -15,10 +15,21 @@ export default function SavingsGoalScreen({ navigation }: any) {
   const { theme } = useTheme();
   const c = colors[theme];
   const [amount, setAmount] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState<Date | null>(null);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+
+  const today = new Date(); // ← 今日
+  const handleConfirm = (date: Date) => {
+    setDeadline(date);
+    setDatePickerVisible(false);
+  };
 
   const handleSave = () => {
-    console.log("保存:", { amount, deadline });
+    if (!amount || !deadline) return;
+    console.log("保存:", {
+      amount,
+      deadline: deadline.toISOString().split("T")[0],
+    });
     navigation.goBack();
   };
 
@@ -28,6 +39,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
     >
       <Text style={[styles.title, { color: c.text }]}>貯金目標を設定</Text>
 
+      {/* 金額入力 */}
       <TextInput
         style={[styles.input, { borderColor: c.border, color: c.text }]}
         placeholder="目標金額 (円)"
@@ -37,16 +49,40 @@ export default function SavingsGoalScreen({ navigation }: any) {
         onChangeText={setAmount}
       />
 
-      <TextInput
-        style={[styles.input, { borderColor: c.border, color: c.text }]}
-        placeholder="期限 (例: 2025-12-31)"
-        placeholderTextColor={c.placeholder}
-        value={deadline}
-        onChangeText={setDeadline}
+      {/* 期限選択ボタン */}
+      <TouchableOpacity
+        style={[styles.input, styles.dateButton, { borderColor: c.border }]}
+        onPress={() => setDatePickerVisible(true)}
+      >
+        <Text
+          style={{
+            color: deadline ? c.text : c.placeholder,
+            fontSize: 16,
+          }}
+        >
+          {deadline ? deadline.toISOString().split("T")[0] : "期限を選択"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* 日付ピッカー */}
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="date"
+        onConfirm={handleConfirm}
+        onCancel={() => setDatePickerVisible(false)}
+        locale="ja"
+        confirmTextIOS="決定"
+        cancelTextIOS="キャンセル"
+        minimumDate={today} // ✅ 今日より未来のみ選択可能
       />
 
+      {/* 保存ボタン */}
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: c.accent }]}
+        style={[
+          styles.button,
+          { backgroundColor: amount && deadline ? c.accent : c.border },
+        ]}
+        disabled={!amount || !deadline}
         onPress={handleSave}
       >
         <Text style={{ color: "#fff", fontWeight: "bold" }}>保存</Text>
@@ -63,7 +99,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
-    fontSize: 16,
+  },
+  dateButton: {
+    justifyContent: "center",
   },
   button: {
     padding: 14,

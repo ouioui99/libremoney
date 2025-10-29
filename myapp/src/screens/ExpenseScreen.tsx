@@ -327,7 +327,7 @@ export default function ExpenseScreen() {
                 marginBottom: 10,
               }}
             >
-              {/* カテゴリー選択 */}
+              {/* 日付選択 */}
               <View style={{ flex: 1, marginRight: 10 }}>
                 <TouchableOpacity
                   style={{
