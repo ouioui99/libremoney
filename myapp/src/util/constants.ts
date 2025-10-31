@@ -37,3 +37,8 @@ export const DISPLAY_CONFIRM_BTN = "登録";
 export const NAV_ROUTES = {
   CATEGORY_EDIT: "CategoryEdit",
 };
+
+export const DISPLAY_TITLE = {
+  savingsGoalScreen: "貯金目標を設定",
+  manageRegularIncomeScreen: "定期収入の管理",
+};

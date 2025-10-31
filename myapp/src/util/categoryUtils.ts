@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Category, NewCategoryInput } from "../types/models";
-import { STORAGE_KEYS } from "./constant";
+import { STORAGE_KEYS } from "./constants";
 import { Alert } from "react-native";
 import {
   addItemToStorage,

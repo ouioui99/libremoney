@@ -1,6 +1,6 @@
 import { boolean } from "./../../node_modules/zod/src/v4/core/regexes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { STORAGE_KEYS } from "./constant";
+import { STORAGE_KEYS } from "./constants";
 
 /**
  * 任意のキーの配列データに新しい要素を追加して保存する

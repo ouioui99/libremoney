@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -16,21 +16,26 @@ import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { Ionicons } from "@expo/vector-icons";
 import { getTodayLocal } from "../util/dateUtils";
-import { STORAGE_KEYS } from "../util/constant";
+import { DISPLAY_TITLE, STORAGE_KEYS } from "../util/constants";
 import { addItemToStorage, getItemsFromStorage } from "../util/storageUtils";
 import { SavingsGoal } from "../types/models";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustumHeader from "../components/CustomHeader";
 
 export default function SavingsGoalScreen({ navigation }: any) {
   const { theme } = useTheme();
   const c = colors[theme];
+
   const [amount, setAmount] = useState("");
   const [deadline, setDeadline] = useState<Date | null>(null);
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  const [originalGoal, setOriginalGoal] = useState<SavingsGoal | null>(null);
+  const [hasChanged, setHasChanged] = useState(false);
 
   const today = new Date(getTodayLocal());
 
+  // 🔹 初回読み込み（既存データがある場合は編集モードに）
   useEffect(() => {
     (async () => {
       try {
@@ -39,8 +44,10 @@ export default function SavingsGoalScreen({ navigation }: any) {
         );
 
         if (storedSavingGoal.length > 0) {
-          setAmount(String(storedSavingGoal[0].amount));
-          setDeadline(new Date(storedSavingGoal[0].deadline));
+          const goal = storedSavingGoal[0];
+          setAmount(String(goal.amount));
+          setDeadline(new Date(goal.deadline));
+          setOriginalGoal(goal);
           setIsEdit(true);
         }
       } catch (e) {
@@ -49,15 +56,42 @@ export default function SavingsGoalScreen({ navigation }: any) {
     })();
   }, []);
 
+  // 🔹 値の変更検知
+  useEffect(() => {
+    if (!isEdit || !originalGoal) {
+      setHasChanged(!!amount && !!deadline);
+      return;
+    }
+
+    const originalAmount = String(originalGoal.amount);
+    const originalDeadline = new Date(originalGoal.deadline)
+      .toISOString()
+      .split("T")[0];
+    const currentDeadline = deadline
+      ? deadline.toISOString().split("T")[0]
+      : "";
+
+    setHasChanged(
+      amount !== originalAmount || currentDeadline !== originalDeadline
+    );
+  }, [amount, deadline, isEdit, originalGoal]);
+
+  // 🔹 日付選択
   const handleConfirm = (date: Date) => {
     setDeadline(date);
     setDatePickerVisible(false);
   };
 
+  // 🔹 保存処理
   const handleSave = () => {
     if (!amount || !deadline) return;
 
-    // ✅ 編集モードの場合は確認を挟む
+    const savingGoal = {
+      amount,
+      deadline: deadline.toISOString().split("T")[0],
+      createdAt: getTodayLocal(),
+    };
+
     if (isEdit) {
       Alert.alert(
         "目標を上書きしますか？",
@@ -69,12 +103,10 @@ export default function SavingsGoalScreen({ navigation }: any) {
             style: "destructive",
             onPress: async () => {
               try {
-                // 一度目標を削除
                 await AsyncStorage.setItem(
                   STORAGE_KEYS.SAVING_GOAL,
                   JSON.stringify([])
                 );
-                // 新しい目標を保存
                 await addItemToStorage(
                   STORAGE_KEYS.SAVING_GOAL,
                   [],
@@ -88,52 +120,27 @@ export default function SavingsGoalScreen({ navigation }: any) {
           },
         ]
       );
-      return; // ⚠️ Alertが出た時点で一旦終了
+      return;
     }
 
-    const savingGoal = {
-      amount,
-      deadline: deadline.toISOString().split("T")[0],
-      createdAt: getTodayLocal(),
-    };
-
-    //編集の場合は現状1つしか目標を設定できない想定なので一度目標を消す
-    if (isEdit) {
-      AsyncStorage.setItem(STORAGE_KEYS.SAVING_GOAL, JSON.stringify([]));
-    }
     addItemToStorage(STORAGE_KEYS.SAVING_GOAL, [], savingGoal);
-
     navigation.goBack();
   };
+
+  // 🔹 日付ピッカーの初期値（編集モードなら既存期限、なければ今日）
+  const initialDate = useMemo(() => {
+    return deadline ? deadline : today;
+  }, [deadline]);
 
   return (
     <SafeAreaLayout
       style={[styles.container, { backgroundColor: c.background }]}
     >
-      {/* ✅ カスタムヘッダー */}
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: c.background,
-            borderBottomColor: c.border,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chevron-back" size={24} color="#007AFF" />
-          <Text style={styles.backText}>戻る</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: c.text }]}>
-          貯金目標を設定
-        </Text>
-        {/* バランス用スペーサー */}
-        <View style={{ width: 70 }} />
-      </View>
+      {/* ヘッダー */}
+      <CustumHeader
+        title={DISPLAY_TITLE.savingsGoalScreen}
+        navigation={navigation}
+      />
 
       {/* --- 本文 --- */}
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -144,9 +151,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
             paddingTop: -56 / 2, // 👈 ヘッダー分のズレ補正
           }}
         >
-          {/* 本文コンテンツ全体を幅制限して中央に */}
           <View style={{ width: "90%", maxWidth: 400 }}>
-            {/* 説明文 */}
             <Text
               style={[
                 styles.subtitle,
@@ -224,14 +229,17 @@ export default function SavingsGoalScreen({ navigation }: any) {
               style={[
                 styles.saveButton,
                 {
-                  backgroundColor: amount && deadline ? c.accent : c.border,
+                  backgroundColor:
+                    hasChanged && amount && deadline ? c.accent : c.border,
                   shadowColor: c.accent,
                 },
               ]}
-              disabled={!amount || !deadline}
+              disabled={!hasChanged || !amount || !deadline}
               onPress={handleSave}
             >
-              <Text style={styles.saveButtonText}>保存する</Text>
+              <Text style={styles.saveButtonText}>
+                {isEdit ? "上書き保存" : "保存する"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -247,6 +255,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
         confirmTextIOS="決定"
         cancelTextIOS="キャンセル"
         minimumDate={today}
+        date={initialDate}
       />
     </SafeAreaLayout>
   );
@@ -254,27 +263,6 @@ export default function SavingsGoalScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: 56,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-  },
-  backText: {
-    color: "#007AFF",
-    fontSize: 17,
-    marginLeft: 2,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-  },
   subtitle: {
     fontSize: 15,
     marginBottom: 20,

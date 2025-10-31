@@ -19,7 +19,7 @@ import {
   getItemsFromStorage,
   getNextId,
 } from "../util/storageUtils";
-import { CALC_BUTTONS, STORAGE_KEYS } from "../util/constant";
+import { CALC_BUTTONS, STORAGE_KEYS } from "../util/constants";
 import { Category, Expense, NewCategoryInput } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import CategorySelector from "../components/CategorySelector";

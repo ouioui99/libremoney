@@ -15,7 +15,7 @@ import {
 import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { useTheme } from "../contexts/ThemeContext";
-import { STORAGE_KEYS } from "../util/constant";
+import { STORAGE_KEYS } from "../util/constants";
 import {
   addItemToStorage,
   getItemsFromStorage,

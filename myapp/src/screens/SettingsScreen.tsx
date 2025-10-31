@@ -24,7 +24,7 @@ export default function SettingsScreen({ navigation }: any) {
   };
 
   const handleTargetSettings = () => navigation.navigate("SavingsGoal");
-  const handleIncomeSettings = () => console.log("収入設定を開く");
+  const handleIncomeSettings = () => navigation.navigate("manageRegulaIncome");
   const handleRegularExpenseSettings = () => console.log("定期支出設定を開く");
 
   type SettingsItem = {
@@ -53,13 +53,13 @@ export default function SettingsScreen({ navigation }: any) {
       data: [
         {
           key: "regular-income",
-          label: "定期的な収入を設定",
+          label: "定期的な収入を管理",
           type: "link",
           onPress: handleIncomeSettings,
         },
         {
           key: "regular-expense",
-          label: "定期的な支出を登録",
+          label: "定期的な支出を管理",
           type: "link",
           onPress: handleRegularExpenseSettings,
         },

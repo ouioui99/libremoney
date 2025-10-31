@@ -12,7 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
 import { useTheme } from "../contexts/ThemeContext";
-import { STORAGE_KEYS } from "../util/constant";
+import { STORAGE_KEYS } from "../util/constants";
 import { getItemsFromStorage } from "../util/storageUtils";
 import EditExpenseModal from "../components/EditExpenseModal";
 import { Expense, Category } from "../types/models";

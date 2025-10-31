@@ -17,7 +17,7 @@ import { colors } from "../theme/colors";
 import CalendarModal from "../components/CalenderModal";
 import { Expense } from "../types/models";
 import { editItemInStorage } from "../util/storageUtils";
-import { STORAGE_KEYS } from "../util/constant";
+import { STORAGE_KEYS } from "../util/constants";
 
 type Props = {
   visible: boolean;
