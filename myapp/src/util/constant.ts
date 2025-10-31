@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   EXPENSE_CATEGORIES_COUNTER: "expense_categories_next_id",
   INCOME_CATEGORIES: "income_categories",
   INCOMES_CATEGORIES_COUNTER: "income_categories_next_id",
+  SAVING_GOAL: "saving_goal",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

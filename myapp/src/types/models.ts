@@ -22,3 +22,8 @@ export interface Expense {
   categoryId: string; // Categoryのidを参照
   memo?: string;
 }
+
+export interface SavingsGoal {
+  amount: number;
+  deadline: string;
+}
