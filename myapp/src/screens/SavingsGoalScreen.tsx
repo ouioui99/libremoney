@@ -94,6 +94,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
     const savingGoal = {
       amount,
       deadline: deadline.toISOString().split("T")[0],
+      createdAt: getTodayLocal(),
     };
 
     //編集の場合は現状1つしか目標を設定できない想定なので一度目標を消す

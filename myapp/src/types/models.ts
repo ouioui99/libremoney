@@ -26,4 +26,5 @@ export interface Expense {
 export interface SavingsGoal {
   amount: number;
   deadline: string;
+  createdAt: string;
 }

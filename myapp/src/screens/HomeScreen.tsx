@@ -21,7 +21,7 @@ import {
   getItemsFromStorage,
   getNextId,
 } from "../util/storageUtils";
-import { Category, Expense } from "../types/models";
+import { Category, Expense, SavingsGoal } from "../types/models";
 import CategorySelector from "../components/CategorySelector";
 import {
   handleCategoryDelete,
@@ -29,17 +29,21 @@ import {
   handleCategoryReorder,
 } from "../util/categoryUtils";
 import { Ionicons } from "@expo/vector-icons";
-import { getTodayLocal } from "../util/dateUtils";
+import {
+  calculateRemainingDays,
+  calculateTotalDays,
+  getTodayLocal,
+} from "../util/dateUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
-  const targetSavings = 500000;
-  const remainingDays = 120;
   const todayUsable = 3500;
-  const totalDays = 150;
 
   const [expense, setExpense] = useState("");
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [savingGoal, setSavingGoal] = useState<SavingsGoal>();
+  const [remainingDays, setRemainingDays] = useState<number>(0);
+  const [totalDays, setTotalDays] = useState<number>(0);
   const inputRef = useRef<TextInput>(null);
 
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
@@ -59,8 +63,6 @@ export default function HomeScreen() {
 
   const { theme } = useTheme();
   const c = colors[theme];
-
-  const progress = (totalDays - remainingDays) / totalDays;
 
   useEffect(() => {
     //開発用
@@ -82,6 +84,10 @@ export default function HomeScreen() {
 
         const storeIncomeCategories = await getItemsFromStorage<Category>(
           STORAGE_KEYS.INCOME_CATEGORIES
+        );
+
+        const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
+          STORAGE_KEYS.SAVING_GOAL
         );
 
         // order プロパティでソート
@@ -107,6 +113,21 @@ export default function HomeScreen() {
 
         if (sortedIncomeCategories.length > 0) {
           setIncomeCategories(sortedIncomeCategories);
+        }
+
+        if (storedSavingGoal.length > 0) {
+          const savingGoal = storedSavingGoal[0];
+          setSavingGoal(savingGoal);
+          const calculatedRemainingDays = calculateRemainingDays(
+            savingGoal.deadline
+          );
+          setRemainingDays(calculatedRemainingDays);
+
+          const totalDays = calculateTotalDays(
+            savingGoal.deadline,
+            savingGoal.createdAt
+          );
+          setTotalDays(totalDays);
         }
 
         if (isIncomeMode) {
@@ -153,6 +174,8 @@ export default function HomeScreen() {
       Alert.alert("エラー", "保存に失敗しました");
     }
   };
+
+  const progress = (totalDays - remainingDays) / totalDays;
 
   /** ✅ カテゴリーごとの合計金額を算出 */
   const categoryTotals = useMemo(() => {
@@ -307,7 +330,7 @@ export default function HomeScreen() {
           <View style={[styles.card, { backgroundColor: c.card }]}>
             <Text style={[styles.label, { color: c.text }]}>目標貯金額</Text>
             <Text style={[styles.subAmount, { color: c.text }]}>
-              ¥{targetSavings.toLocaleString()}
+              ¥{savingGoal?.amount.toLocaleString()}
             </Text>
 
             <Text style={[styles.label, { marginTop: 12, color: c.text }]}>
@@ -333,7 +356,7 @@ export default function HomeScreen() {
           </View>
         </TouchableWithoutFeedback>
         {/* ✅ カテゴリー別支出 */}
-        <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
+        {/* <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>
             カテゴリー別支出
           </Text>
@@ -374,7 +397,7 @@ export default function HomeScreen() {
               </View>
             )}
           />
-        </View>
+        </View> */}
         {/* カテゴリーセレクター */}
         <CategorySelector
           categories={isIncomeMode ? incomeCategories : expenseCategories}
