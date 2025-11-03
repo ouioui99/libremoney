@@ -5,7 +5,7 @@ import BottomTabNavigator from "./BottomTabNavigator";
 import SavingsGoalScreen from "../screens/SavingsGoalScreen";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
-import ManageRegularIncomeScreen from "../screens/ManageRegulaIncomeScreen";
+import ManageRegularIncomeScreen from "../screens/ManageRegularIncomeScreen";
 
 const Stack = createNativeStackNavigator();
 
