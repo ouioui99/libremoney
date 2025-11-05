@@ -205,29 +205,147 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
         type="income"
       />
 
-      {/* 収入リスト */}
+      {/* 支出一覧 */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          backgroundColor: c.background,
+          borderBottomWidth: 1,
+          borderBottomColor:
+            theme === "dark" ? `${c.secondary}40` : `${c.secondary}80`,
+        }}
+      >
+        <Ionicons name="cash-outline" size={20} color={c.accent} />
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: "700",
+            color: c.text,
+            marginLeft: 6,
+          }}
+        >
+          定期収入一覧
+        </Text>
+      </View>
+
       <FlatList
         data={incomes}
         keyExtractor={(item) => item.id}
-        style={{ marginTop: 16 }}
-        renderItem={({ item }) => (
-          <View style={[styles.item, { backgroundColor: c.secondary }]}>
-            <View>
-              <Text style={[styles.itemText, { color: c.text }]}>
-                {item.memo || "メモなし"}（カテゴリー：
-                {categories.find((c) => c.id === item.categoryId)?.name ??
-                  "未設定"}
-                ）
-              </Text>
-              <Text style={{ color: c.placeholder }}>
-                {item.amount.toLocaleString()} 円 / {item.cycleRule}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => handleDelete(item.id)}>
-              <Ionicons name="trash-outline" size={20} color={"red"} />
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        renderItem={({ item, index }) => {
+          const category = categories.find((c) => c.id === item.categoryId);
+          const backgroundColor =
+            index % 2 !== 0
+              ? c.card
+              : theme === "dark"
+              ? `${c.secondary}60`
+              : `${c.secondary}90`;
+
+          return (
+            <TouchableOpacity
+              onPress={() =>
+                Alert.alert(
+                  "収入詳細",
+                  `${item.memo || "メモなし"}\n${
+                    category?.name ?? "未設定"
+                  }\n${item.amount.toLocaleString()} 円 / ${item.cycleRule}`
+                )
+              }
+            >
+              <View
+                style={[
+                  styles.incomeItem,
+                  {
+                    backgroundColor,
+                    paddingHorizontal: 12,
+                    borderBottomWidth: index === incomes.length - 1 ? 0 : 0.6,
+                    borderBottomColor: c.border,
+                  },
+                ]}
+              >
+                {/* 上段：金額とカテゴリ */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={[styles.amountText, { color: c.text }]}>
+                    ¥{item.amount.toLocaleString()}
+                  </Text>
+
+                  {category && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Ionicons
+                        name={category.icon || "wallet-outline"}
+                        size={18}
+                        color={c.accent}
+                      />
+                      <Text style={[styles.categoryText, { color: c.accent }]}>
+                        {category.name}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* 下段：メモとサイクル */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: c.placeholder,
+                      fontSize: 14,
+                    }}
+                    numberOfLines={1}
+                  >
+                    📝 {item.memo || "メモなし"}
+                  </Text>
+
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Ionicons
+                      name="repeat-outline"
+                      size={14}
+                      color={c.placeholder}
+                      style={{ marginRight: 2 }}
+                    />
+                    <Text style={{ color: c.placeholder, fontSize: 13 }}>
+                      {item.cycleRule}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </TouchableOpacity>
-          </View>
-        )}
+          );
+        }}
+        ListEmptyComponent={
+          <Text
+            style={{
+              color: c.placeholder,
+              textAlign: "center",
+              marginTop: 40,
+              fontSize: 15,
+            }}
+          >
+            まだ定期収入が登録されていません
+          </Text>
+        }
       />
     </SafeAreaLayout>
   );
@@ -294,4 +412,51 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   itemText: { fontSize: 16, fontWeight: "600" },
+  incomeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 10,
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  incomeLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  memoText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  incomeRight: {
+    alignItems: "flex-end",
+    marginRight: 8,
+  },
+  cycleText: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  deleteButton: {
+    padding: 6,
+  },
+  incomeItem: {
+    flexDirection: "column",
+    borderRadius: 0, // ← 並んだ時に自然に見えるよう角丸を外す
+    paddingVertical: 10,
+  },
+  amountText: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
 });
