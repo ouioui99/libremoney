@@ -28,3 +28,20 @@ export interface SavingsGoal {
   deadline: string;
   createdAt: string;
 }
+
+export interface RegularIncome {
+  id: string;
+  amount: number;
+  memo: string;
+  categoryId: string;
+  cycleRule: CycleRule;
+}
+
+export interface CycleRule {
+  type: "weekly" | "monthly" | "yearly";
+  detail?: {
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    month?: number;
+  };
+}

@@ -22,15 +22,8 @@ import {
   handleCategoryReorder,
 } from "../util/categoryUtils";
 import { STORAGE_KEYS } from "../util/constants";
-import { Category } from "../types/models";
-
-type RegularIncome = {
-  id: string;
-  amount: number;
-  memo: string;
-  categoryId: string;
-  cycleRule: string;
-};
+import { Category, CycleRule, RegularIncome } from "../types/models";
+import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
 
 export default function ManageRegularIncomeScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -43,6 +36,10 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
   const [incomes, setIncomes] = useState<RegularIncome[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
+  const [showCycleRuleSettingModal, setShowCycleRuleSettingModal] =
+    useState(false);
+
+  const [cycleRuleType, setCycleRuleType] = useState<CycleRule["type"]>();
 
   useEffect(() => {
     loadIncomes();
@@ -77,13 +74,15 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
 
   const handleAdd = () => {
     if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
+    if (!cycleRuleType)
+      return Alert.alert("入力エラー", "サイクルルールを設定してください");
 
     const newIncome: RegularIncome = {
       id: Date.now().toString(),
       amount: Number(amount),
       memo,
       categoryId,
-      cycleRule: "月1回",
+      cycleRule: { type: cycleRuleType },
     };
 
     const updated = [...incomes, newIncome];
@@ -169,17 +168,31 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
             {/* サイクルルール */}
             <TouchableOpacity
               style={[styles.cycleButton, { backgroundColor: c.secondary }]}
-              onPress={() => navigation.navigate("CycleRuleScreen")}
+              onPress={() => setShowCycleRuleSettingModal(true)}
             >
               <Ionicons name="repeat-outline" size={18} color={c.text} />
               <Text style={{ color: c.text, marginLeft: 6 }}>
-                サイクルルールを設定
+                {typeof cycleRuleType === "undefined" || cycleRuleType === null
+                  ? "サイクルルールを設定"
+                  : cycleRuleType === "weekly"
+                  ? "週1（毎週）"
+                  : cycleRuleType === "monthly"
+                  ? "月1（毎月）"
+                  : "年1（毎年）"}
               </Text>
             </TouchableOpacity>
 
             {/* 追加ボタン */}
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: c.accent }]}
+              style={[
+                styles.addButton,
+                {
+                  backgroundColor:
+                    amount || cycleRuleType ? c.accent : c.border,
+                  shadowColor: c.accent,
+                },
+              ]}
+              disabled={!amount || !cycleRuleType}
               onPress={handleAdd}
             >
               <Ionicons name="add" size={20} color="#fff" />
@@ -188,22 +201,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           </View>
         </View>
       </View>
-
-      {/* カテゴリーセレクター */}
-      <CategorySelector
-        categories={categories}
-        setCategories={setCategories}
-        selectedCategoryId={categoryId}
-        onSelect={(id: string) => setCategoryId(id)}
-        onReorder={handleCategoryReorder}
-        onDelete={handleCategoryDelete}
-        onEditSave={handleCategoryEditOnSave}
-        showCategoryModal={showCategoryModal}
-        setShowCategoryModal={setShowCategoryModal}
-        showCategoryListModal={showCategoryListModal}
-        setShowCategoryListModal={setShowCategoryListModal}
-        type="income"
-      />
 
       {/* 支出一覧 */}
       <View
@@ -326,7 +323,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
                       style={{ marginRight: 2 }}
                     />
                     <Text style={{ color: c.placeholder, fontSize: 13 }}>
-                      {item.cycleRule}
+                      {item.cycleRule.type}
                     </Text>
                   </View>
                 </View>
@@ -346,6 +343,31 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
             まだ定期収入が登録されていません
           </Text>
         }
+      />
+
+      {/* カテゴリーセレクター */}
+      <CategorySelector
+        categories={categories}
+        setCategories={setCategories}
+        selectedCategoryId={categoryId}
+        onSelect={(id: string) => setCategoryId(id)}
+        onReorder={handleCategoryReorder}
+        onDelete={handleCategoryDelete}
+        onEditSave={handleCategoryEditOnSave}
+        showCategoryModal={showCategoryModal}
+        setShowCategoryModal={setShowCategoryModal}
+        showCategoryListModal={showCategoryListModal}
+        setShowCategoryListModal={setShowCategoryListModal}
+        type="income"
+      />
+
+      <CycleRuleSettingModal
+        visible={showCycleRuleSettingModal}
+        onClose={() => setShowCycleRuleSettingModal(false)}
+        onSave={(rule) => {
+          setCycleRuleType(rule);
+        }}
+        initialCycle={cycleRuleType}
       />
     </SafeAreaLayout>
   );
