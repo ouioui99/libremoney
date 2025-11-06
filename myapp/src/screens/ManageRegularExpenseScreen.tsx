@@ -17,7 +17,7 @@ import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
 import RegularIncomeAndExpenseForm from "../components/RegularIncomeAndExpenseForm";
 import RegularIncomeAndExpenseList from "../components/RegularIncomeAndExpenseList";
 
-export default function ManageRegularIncomeScreen({ navigation }: any) {
+export default function ManageRegularExpenseScreen({ navigation }: any) {
   const { theme } = useTheme();
   const c = colors[theme];
 
@@ -25,7 +25,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
   const [memo, setMemo] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [incomes, setIncomes] = useState<RegularIncome[]>([]);
+  const [expenses, setExpenses] = useState<RegularIncome[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [showCycleRuleSettingModal, setShowCycleRuleSettingModal] =
@@ -34,32 +34,32 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
   const [cycleRuleType, setCycleRuleType] = useState<CycleRule["type"]>();
 
   useEffect(() => {
-    loadIncomes();
+    loadExpenses();
     loadCategories();
   }, []);
 
-  const loadIncomes = async () => {
+  const loadExpenses = async () => {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.REGULARLY_INCOMES);
-      if (data) setIncomes(JSON.parse(data));
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.REGULARLY_EXPENSES);
+      if (data) setExpenses(JSON.parse(data));
     } catch (e) {
-      console.error("収入データの読み込みに失敗:", e);
+      console.error("支出データの読み込みに失敗:", e);
     }
   };
 
   const loadCategories = async () => {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.INCOME_CATEGORIES);
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.EXPENSE_CATEGORIES);
       if (data) setCategories(JSON.parse(data));
     } catch (e) {
       console.error("カテゴリー読み込みエラー:", e);
     }
   };
 
-  const saveIncomes = async (newList: RegularIncome[]) => {
-    setIncomes(newList);
+  const saveExpenses = async (newList: RegularIncome[]) => {
+    setExpenses(newList);
     await AsyncStorage.setItem(
-      STORAGE_KEYS.REGULARLY_INCOMES,
+      STORAGE_KEYS.REGULARLY_EXPENSES,
       JSON.stringify(newList)
     );
   };
@@ -77,22 +77,22 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
       cycleRule: { type: cycleRuleType },
     };
 
-    const updated = [...incomes, newIncome];
-    saveIncomes(updated);
+    const updated = [...expenses, newIncome];
+    saveExpenses(updated);
     setAmount("");
     setMemo("");
     setCategoryId("");
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("削除確認", "この収入を削除しますか？", [
+    Alert.alert("削除確認", "この支出を削除しますか？", [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
         style: "destructive",
         onPress: async () => {
-          const filtered = incomes.filter((item) => item.id !== id);
-          saveIncomes(filtered);
+          const filtered = expenses.filter((item) => item.id !== id);
+          saveExpenses(filtered);
         },
       },
     ]);
@@ -105,7 +105,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
       style={[styles.container, { backgroundColor: c.background }]}
     >
       {/* ヘッダー */}
-      <CustumHeader title="定期収入設定" navigation={navigation} />
+      <CustumHeader title="定期支出設定" navigation={navigation} />
       {/* 追加フォーム */}
       <RegularIncomeAndExpenseForm
         categoryId={categoryId}
@@ -120,19 +120,19 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
             categoryId,
             cycleRule: { type: cycleRule },
           };
-          const updated = [...incomes, newIncome];
-          saveIncomes(updated);
+          const updated = [...expenses, newIncome];
+          saveExpenses(updated);
         }}
       />
 
       {/* 支出一覧 */}
       <RegularIncomeAndExpenseList
-        incomes={incomes}
+        incomes={expenses}
         categories={categories}
         theme={theme}
         colors={c}
         onDelete={handleDelete}
-        type="収入"
+        type="支出"
       />
 
       {/* カテゴリーセレクター */}
@@ -148,7 +148,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
         setShowCategoryModal={setShowCategoryModal}
         showCategoryListModal={showCategoryListModal}
         setShowCategoryListModal={setShowCategoryListModal}
-        type="income"
+        type="expense"
       />
       <CycleRuleSettingModal
         visible={showCycleRuleSettingModal}

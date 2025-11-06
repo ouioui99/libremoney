@@ -6,6 +6,7 @@ import SavingsGoalScreen from "../screens/SavingsGoalScreen";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import ManageRegularIncomeScreen from "../screens/ManageRegularIncomeScreen";
+import ManageRegularExpenseScreen from "../screens/ManageRegularExpenseScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +30,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="manageRegulaIncome"
         component={ManageRegularIncomeScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="manageRegulaExpense"
+        component={ManageRegularExpenseScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

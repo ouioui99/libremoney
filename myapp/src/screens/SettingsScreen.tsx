@@ -25,7 +25,8 @@ export default function SettingsScreen({ navigation }: any) {
 
   const handleTargetSettings = () => navigation.navigate("SavingsGoal");
   const handleIncomeSettings = () => navigation.navigate("manageRegulaIncome");
-  const handleRegularExpenseSettings = () => console.log("定期支出設定を開く");
+  const handleRegularExpenseSettings = () =>
+    navigation.navigate("manageRegulaExpense");
 
   type SettingsItem = {
     key: string;
