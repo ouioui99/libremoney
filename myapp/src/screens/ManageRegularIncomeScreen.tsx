@@ -24,6 +24,7 @@ import {
 import { STORAGE_KEYS } from "../util/constants";
 import { Category, CycleRule, RegularIncome } from "../types/models";
 import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
+import RegularIncomeAndForm from "../components/RegularIncomeAndForm";
 
 export default function ManageRegularIncomeScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -114,93 +115,24 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
     >
       {/* ヘッダー */}
       <CustumHeader title="定期収入設定" navigation={navigation} />
-
       {/* 追加フォーム */}
-      <View
-        style={{
-          justifyContent: "center",
-          alignItems: "center",
-          marginTop: 8,
+      <RegularIncomeAndForm
+        categoryId={categoryId}
+        setCategoryId={setCategoryId}
+        categories={categories}
+        onPressCategorySelect={() => setShowCategoryModal(true)} // 👈 追加
+        onAdd={(amount, memo, categoryId, cycleRule) => {
+          const newIncome: RegularIncome = {
+            id: Date.now().toString(),
+            amount,
+            memo,
+            categoryId,
+            cycleRule: { type: cycleRule },
+          };
+          const updated = [...incomes, newIncome];
+          saveIncomes(updated);
         }}
-      >
-        <View style={{ width: "95%", maxWidth: 400 }}>
-          <View style={[styles.card, { backgroundColor: c.card }]}>
-            {/* 金額 */}
-            <Text style={[styles.label, { color: c.text }]}>金額</Text>
-            <TextInput
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="例: 250000"
-              keyboardType="numeric"
-              placeholderTextColor={c.placeholder}
-              style={[styles.input, { color: c.text, borderColor: c.border }]}
-            />
-
-            {/* メモ */}
-            <Text style={[styles.label, { color: c.text, marginTop: 12 }]}>
-              メモ
-            </Text>
-            <TextInput
-              value={memo}
-              onChangeText={setMemo}
-              placeholder="例: 基本給"
-              placeholderTextColor={c.placeholder}
-              style={[styles.input, { color: c.text, borderColor: c.border }]}
-            />
-
-            {/* カテゴリー選択 */}
-            <Text style={[styles.label, { color: c.text, marginTop: 12 }]}>
-              カテゴリー
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowCategoryModal(true)}
-              style={[
-                styles.categoryButton,
-                { backgroundColor: c.secondary, borderColor: c.border },
-              ]}
-            >
-              <Text style={{ color: c.text }}>
-                {selectedCategory ? selectedCategory.name : "カテゴリーを選択"}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={c.text} />
-            </TouchableOpacity>
-
-            {/* サイクルルール */}
-            <TouchableOpacity
-              style={[styles.cycleButton, { backgroundColor: c.secondary }]}
-              onPress={() => setShowCycleRuleSettingModal(true)}
-            >
-              <Ionicons name="repeat-outline" size={18} color={c.text} />
-              <Text style={{ color: c.text, marginLeft: 6 }}>
-                {typeof cycleRuleType === "undefined" || cycleRuleType === null
-                  ? "サイクルルールを設定"
-                  : cycleRuleType === "weekly"
-                  ? "週1（毎週）"
-                  : cycleRuleType === "monthly"
-                  ? "月1（毎月）"
-                  : "年1（毎年）"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* 追加ボタン */}
-            <TouchableOpacity
-              style={[
-                styles.addButton,
-                {
-                  backgroundColor:
-                    amount || cycleRuleType ? c.accent : c.border,
-                  shadowColor: c.accent,
-                },
-              ]}
-              disabled={!amount || !cycleRuleType}
-              onPress={handleAdd}
-            >
-              <Ionicons name="add" size={20} color="#fff" />
-              <Text style={styles.addButtonText}>追加</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
+      />
 
       {/* 支出一覧 */}
       <View
@@ -227,7 +159,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           定期収入一覧
         </Text>
       </View>
-
       <FlatList
         data={incomes}
         keyExtractor={(item) => item.id}
@@ -344,7 +275,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           </Text>
         }
       />
-
       {/* カテゴリーセレクター */}
       <CategorySelector
         categories={categories}
@@ -360,7 +290,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
         setShowCategoryListModal={setShowCategoryListModal}
         type="income"
       />
-
       <CycleRuleSettingModal
         visible={showCycleRuleSettingModal}
         onClose={() => setShowCycleRuleSettingModal(false)}
