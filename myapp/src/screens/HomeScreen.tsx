@@ -21,7 +21,7 @@ import {
   getItemsFromStorage,
   getNextId,
 } from "../util/storageUtils";
-import { Category, Expense, SavingsGoal } from "../types/models";
+import { Category, Expense, RegularIncome, SavingsGoal } from "../types/models";
 import CategorySelector from "../components/CategorySelector";
 import {
   handleCategoryDelete,
@@ -34,13 +34,19 @@ import {
   calculateTotalDays,
   getTodayLocal,
 } from "../util/dateUtils";
+import {
+  calculateTodayUsableAmount,
+  calculateTotalUsableAmount,
+} from "../util/displayUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
-  const todayUsable = 3500;
+  // const todayUsable = 3500;
 
+  const [todayUsable, setTodayUsable] = useState(3000);
   const [expense, setExpense] = useState("");
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<Expense[]>([]);
   const [savingGoal, setSavingGoal] = useState<SavingsGoal>();
   const [remainingDays, setRemainingDays] = useState<number>(0);
   const [totalDays, setTotalDays] = useState<number>(0);
@@ -56,6 +62,9 @@ export default function HomeScreen() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
 
+  const [calculatedTodayUsableAmount, setCalculatedTodayUsableAmount] =
+    useState(0);
+
   const [isIncomeMode, setIsIncomeMode] = useState(false);
   const targetStorageKey = isIncomeMode
     ? STORAGE_KEYS.INCOMES
@@ -70,13 +79,20 @@ export default function HomeScreen() {
     // AsyncStorage.setItem(STORAGE_KEYS.INCOME_CATEGORIES, JSON.stringify([]));
     // AsyncStorage.setItem("categories", JSON.stringify([]));
     // AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
+    // AsyncStorage.setItem(STORAGE_KEYS.INCOMES, JSON.stringify([]));
 
     (async () => {
       try {
         const storedExpenses = await getItemsFromStorage<Expense>(
           STORAGE_KEYS.EXPENSES
         );
-        setExpenses(storedExpenses || []);
+
+        const storedIncomes = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.INCOMES
+        );
+
+        setExpenses(storedExpenses);
+        setIncomes(storedIncomes);
 
         const storedExpenseCategories = await getItemsFromStorage<Category>(
           STORAGE_KEYS.EXPENSE_CATEGORIES
@@ -88,6 +104,14 @@ export default function HomeScreen() {
 
         const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
           STORAGE_KEYS.SAVING_GOAL
+        );
+
+        const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
+          STORAGE_KEYS.REGULARLY_INCOMES
+        );
+
+        const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
+          STORAGE_KEYS.REGULARLY_EXPENSES
         );
 
         // order プロパティでソート
@@ -128,6 +152,24 @@ export default function HomeScreen() {
             savingGoal.createdAt
           );
           setTotalDays(totalDays);
+
+          const calculatedTodayUsableAmount = calculateTodayUsableAmount(
+            savingGoal.amount,
+            storedRegularyExpenses,
+            storedRegularyIncomes,
+            // storedExpenses,
+            // storedIncomes,
+            calculatedRemainingDays
+          );
+
+          setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
+          calculateTotalUsableAmount(
+            calculatedTodayUsableAmount,
+            totalDays,
+            storedExpenses,
+            storedIncomes,
+            storedSavingGoal[0].createdAt
+          );
         }
 
         if (isIncomeMode) {
@@ -139,7 +181,7 @@ export default function HomeScreen() {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, [isIncomeMode, showCategoryListModal]);
+  }, [isIncomeMode, showCategoryListModal, remainingDays]);
 
   const handleAddExpenseOrIncome = async () => {
     if (!expense || !selectedCategory) return;
@@ -156,7 +198,7 @@ export default function HomeScreen() {
 
       const newItems = await addItemToStorage(
         targetStorageKey,
-        expenses,
+        isIncomeMode ? incomes : expenses,
         newItem
       );
 
@@ -204,7 +246,7 @@ export default function HomeScreen() {
               今日使える金額
             </Text>
             <Text style={[styles.mainAmount, { color: c.accent }]}>
-              ¥{todayUsable.toLocaleString()}
+              ¥{calculatedTodayUsableAmount.toLocaleString()}
             </Text>
           </View>
         </TouchableWithoutFeedback>
