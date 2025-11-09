@@ -299,14 +299,12 @@ export default function HomeScreen() {
                   flex: 1,
                   padding: 8,
                   borderRadius: 8,
-                  backgroundColor: !isIncomeMode ? c.income : c.secondary,
+                  backgroundColor: !isIncomeMode ? c.expense : c.secondary,
                   marginRight: 4,
                   alignItems: "center",
                 }}
               >
-                <Text style={{ color: !isIncomeMode ? "#fff" : c.text }}>
-                  支出
-                </Text>
+                <Text style={{ color: c.text }}>支出</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setIsIncomeMode(true)}
@@ -319,9 +317,7 @@ export default function HomeScreen() {
                   alignItems: "center",
                 }}
               >
-                <Text style={{ color: isIncomeMode ? "#fff" : c.text }}>
-                  収入
-                </Text>
+                <Text style={{ color: c.text }}>収入</Text>
               </TouchableOpacity>
             </View>
 
@@ -402,34 +398,115 @@ export default function HomeScreen() {
         </TouchableWithoutFeedback>
         {/* 目標貯金額 + 残り日数 */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={[styles.card, { backgroundColor: c.card }]}>
-            <Text style={[styles.label, { color: c.text }]}>目標貯金額</Text>
-            <Text style={[styles.subAmount, { color: c.text }]}>
+          <View
+            style={{
+              backgroundColor: c.card,
+              borderRadius: 16,
+              padding: 16,
+              marginVertical: 8,
+              shadowColor: "#000",
+              shadowOpacity: theme === "light" ? 0.05 : 0.3,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 3, // Android用
+            }}
+          >
+            {/* タイトル */}
+            <Text
+              style={{
+                color: c.text,
+                fontSize: 16,
+                fontWeight: "700",
+                marginBottom: 12,
+              }}
+            >
+              現在の貯金目標
+            </Text>
+
+            {/* 目標貯金額 */}
+            <Text
+              style={{
+                color: c.text,
+                fontSize: 14,
+                fontWeight: "600",
+                marginBottom: 4,
+              }}
+            >
+              目標貯金額
+            </Text>
+            <Text
+              style={{
+                color: c.text,
+                fontSize: 20,
+                fontWeight: "bold",
+                marginBottom: 8,
+              }}
+            >
               ¥{savingGoal?.amount.toLocaleString()}
             </Text>
 
-            <Text style={[styles.label, { marginTop: 12, color: c.text }]}>
-              残り日数
-            </Text>
-            <Text style={[styles.subAmount, { color: c.text }]}>
-              {remainingDays}日
-            </Text>
+            {/* 目標期限 */}
+            {savingGoal?.deadline && (
+              <>
+                <Text
+                  style={{
+                    color: c.placeholder,
+                    fontSize: 12,
+                    marginBottom: 2,
+                  }}
+                >
+                  目標期限
+                </Text>
+                <Text
+                  style={{
+                    color: c.text,
+                    fontSize: 14,
+                    fontWeight: "500",
+                    marginBottom: 8,
+                  }}
+                >
+                  {new Date(savingGoal.deadline).toLocaleDateString()}
+                </Text>
+              </>
+            )}
 
+            {/* 残り日数 */}
             <View
-              style={[
-                styles.progressContainer,
-                { backgroundColor: c.secondary },
-              ]}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
+              }}
+            >
+              <Text style={{ color: c.text, fontSize: 14 }}>残り日数</Text>
+              <Text
+                style={{ color: c.accent, fontSize: 14, fontWeight: "600" }}
+              >
+                {remainingDays}日
+              </Text>
+            </View>
+
+            {/* プログレスバー */}
+            <View
+              style={{
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: c.secondary,
+                overflow: "hidden",
+              }}
             >
               <View
-                style={[
-                  styles.progressBar,
-                  { width: `${progress * 100}%`, backgroundColor: c.accent },
-                ]}
+                style={{
+                  width: `${progress * 100}%`,
+                  height: "100%",
+                  backgroundColor: c.accent,
+                }}
               />
             </View>
           </View>
         </TouchableWithoutFeedback>
+
         {/* ✅ カテゴリー別支出 */}
         {/* <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>

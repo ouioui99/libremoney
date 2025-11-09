@@ -330,7 +330,7 @@ export default function EditExpenseModal({
             >
               <Text
                 style={{
-                  color: c.background,
+                  color: c.text,
                   fontSize: 18,
                   fontWeight: "bold",
                 }}
