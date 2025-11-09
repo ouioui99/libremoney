@@ -325,6 +325,7 @@ export default function HomeScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ paddingRight: 8 }} // 端の余白を少し追加
               >
                 {displaiedCategories.map((cat) => (

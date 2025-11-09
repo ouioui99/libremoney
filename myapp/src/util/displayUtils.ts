@@ -67,6 +67,7 @@ export const calculateTodayUsableAmount = (
     expenses,
     savingsGoalStartedAt
   );
+
   const sumIncomesAfterStarted = sumExpensesAfterDate(
     incomes,
     savingsGoalStartedAt
@@ -75,11 +76,13 @@ export const calculateTodayUsableAmount = (
   const resultAmount =
     totalAllUsableAmount + sumIncomesAfterStarted - sumExpensesAfterStarted;
 
+  console.log(resultAmount);
+
   return resultAmount;
 };
 
 /**
- * 指定日より後の日付の支出を合計する関数
+ * 指定日より後(指定日含む)の日付の支出を合計する関数
  * @param expenses Expense配列
  * @param date ISO文字列 または Dateオブジェクト
  * @returns number 合計金額
@@ -91,6 +94,6 @@ export const sumExpensesAfterDate = (
   const targetDate = new Date(date);
 
   return expenses
-    .filter((expense) => new Date(expense.date) > targetDate)
+    .filter((expense) => new Date(expense.date) >= targetDate)
     .reduce((total, expense) => total + expense.amount, 0);
 };
