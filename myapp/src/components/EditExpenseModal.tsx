@@ -10,14 +10,26 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import CalendarModal from "../components/CalenderModal";
 import { Expense } from "../types/models";
-import { editItemInStorage } from "../util/storageUtils";
+import {
+  editItemInStorage,
+  getItemsFromStorage,
+  removeItemFromStorage,
+} from "../util/storageUtils";
 import { STORAGE_KEYS } from "../util/constants";
+import { Category } from "../types/models"; // カテゴリー型を追加（定義済み前提）
+import CategorySelector from "./CategorySelector";
+import {
+  handleCategoryReorder,
+  handleCategoryDelete,
+  handleCategoryEditOnSave,
+} from "../util/categoryUtils";
 
 type Props = {
   visible: boolean;
@@ -39,40 +51,110 @@ export default function EditExpenseModal({
   const [date, setDate] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>();
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<Expense[]>([]);
+
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryListModal, setShowCategoryListModal] = useState(false);
+
   // 編集対象データが変わるたびに反映
   useEffect(() => {
     if (expense) {
       setAmount(String(expense.amount));
       setMemo(expense.memo ?? "");
       setDate(expense.date);
+      setSelectedCategory(expense.categoryId ?? null);
     }
   }, [expense]);
 
+  // カテゴリー一覧の読み込み
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedCategories = await getItemsFromStorage<Category>(
+          STORAGE_KEYS.EXPENSE_CATEGORIES
+        );
+        setCategories(storedCategories);
+
+        const storedExpenses = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.EXPENSES
+        );
+
+        const storedIncomes = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.INCOMES
+        );
+
+        setExpenses(storedExpenses);
+        setIncomes(storedIncomes);
+      } catch (e) {
+        console.error("カテゴリー読み込みエラー:", e);
+      }
+    })();
+  }, []);
+
   const handleSave = async () => {
-    // if (!amount || isNaN(Number(amount))) {
-    //   Alert.alert("エラー", "正しい金額を入力してください");
-    //   return;
-    // }
-    // if (!expense) return;
-    // const updatedExpense: Expense = {
-    //   ...expense,
-    //   amount: parseFloat(amount),
-    //   memo,
-    //   date,
-    // };
-    // try {
-    //   await editItemInStorage<Expense>(
-    //     STORAGE_KEYS.EXPENSES,
-    //     (item) => item.id === expense.id,
-    //     [],
-    //     updatedExpense
-    //   );
-    //   onSave(updatedExpense);
-    //   onClose();
-    // } catch (e) {
-    //   console.error("編集保存エラー:", e);
-    //   Alert.alert("エラー", "保存に失敗しました");
-    // }
+    if (!amount || isNaN(Number(amount))) {
+      Alert.alert("エラー", "正しい金額を入力してください");
+      return;
+    }
+    if (!selectedCategory) {
+      Alert.alert("エラー", "カテゴリーを選択してください");
+      return;
+    }
+    if (!expense) return;
+
+    const updatedExpense: Expense = {
+      ...expense,
+      amount: parseFloat(amount),
+      memo,
+      date,
+      categoryId: selectedCategory,
+    };
+
+    try {
+      console.log({ updatedExpense });
+
+      await editItemInStorage<Expense>(
+        STORAGE_KEYS.EXPENSES,
+        (item) => item.id === expense.id,
+        updatedExpense
+      );
+      onSave(updatedExpense);
+      onClose();
+    } catch (e) {
+      console.error("編集保存エラー:", e);
+      Alert.alert("エラー", "保存に失敗しました");
+    }
+  };
+
+  const handleDelete = () => {
+    if (!expense) return;
+
+    Alert.alert("確認", "この支出を削除しますか？", [
+      { text: "キャンセル", style: "cancel" },
+      {
+        text: "削除",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // removeItemFromStorage を使用して削除
+            const updatedExpenses = await removeItemFromStorage<Expense>(
+              STORAGE_KEYS.EXPENSES,
+              (item) => item.id === expense.id
+            );
+
+            setExpenses(updatedExpenses); // モーダル内 state 更新
+            onSave(expense); // 親コンポーネントにも反映
+            onClose();
+          } catch (e) {
+            console.error("削除エラー:", e);
+            Alert.alert("エラー", "削除に失敗しました");
+          }
+        },
+      },
+    ]);
   };
 
   if (!expense) return null;
@@ -83,9 +165,9 @@ export default function EditExpenseModal({
         <View
           style={{
             flex: 1,
-            // backgroundColor: `${c.modalOverlay}AA`,
             justifyContent: "center",
             alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.4)", // ← ここで半透明の暗い背景
           }}
         >
           <KeyboardAvoidingView
@@ -161,6 +243,61 @@ export default function EditExpenseModal({
               }}
             />
 
+            {/* カテゴリー選択 */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 6,
+              }}
+            >
+              <Text style={{ color: c.text, fontSize: 16 }}>カテゴリー</Text>
+
+              <TouchableOpacity
+                style={[
+                  {
+                    backgroundColor: c.secondary,
+                    padding: 6,
+                    borderRadius: 8,
+                  },
+                ]}
+                onPress={() => setShowCategoryModal(true)}
+              >
+                <Ionicons name="ellipsis-horizontal" size={20} color={c.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingVertical: 4 }}
+            >
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={{
+                    backgroundColor:
+                      selectedCategory === cat.id ? c.accent : c.secondary,
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    borderRadius: 20,
+                    marginRight: 8,
+                  }}
+                  onPress={() => setSelectedCategory(cat.id)}
+                >
+                  <Text
+                    style={{
+                      color: selectedCategory === cat.id ? "#fff" : c.text,
+                    }}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
             {/* メモ入力 */}
             <TextInput
               style={{
@@ -171,6 +308,7 @@ export default function EditExpenseModal({
                 fontSize: 16,
                 minHeight: 60,
                 textAlignVertical: "top",
+                marginTop: 12,
               }}
               placeholder="メモを入力"
               placeholderTextColor={c.placeholder}
@@ -200,9 +338,47 @@ export default function EditExpenseModal({
                 保存
               </Text>
             </TouchableOpacity>
+
+            {/* 削除ボタン */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: c.error,
+                padding: 14,
+                borderRadius: 10,
+                alignItems: "center",
+                marginTop: 12,
+                marginBottom: 20,
+              }}
+              onPress={handleDelete}
+            >
+              <Text
+                style={{
+                  color: c.textOnAccent,
+                  fontSize: 18,
+                  fontWeight: "bold",
+                }}
+              >
+                削除
+              </Text>
+            </TouchableOpacity>
           </KeyboardAvoidingView>
         </View>
       </TouchableWithoutFeedback>
+      {/* カテゴリーセレクター */}
+      <CategorySelector
+        categories={categories}
+        setCategories={setCategories}
+        selectedCategoryId={selectedCategory}
+        onSelect={(id: string) => setSelectedCategory(id)}
+        onReorder={handleCategoryReorder}
+        onDelete={handleCategoryDelete}
+        onEditSave={handleCategoryEditOnSave}
+        showCategoryModal={showCategoryModal}
+        setShowCategoryModal={setShowCategoryModal}
+        showCategoryListModal={showCategoryListModal}
+        setShowCategoryListModal={setShowCategoryListModal}
+        type={"expense"}
+      />
     </Modal>
   );
 }

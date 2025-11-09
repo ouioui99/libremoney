@@ -51,9 +51,11 @@ export const removeItemFromStorage = async <T>(
 export const editItemInStorage = async <T>(
   key: string,
   matchFn: (item: T) => boolean,
-  items: T[],
   newItem: T
 ): Promise<T[]> => {
+  // 最新のデータを取得
+  const items = await getItemsFromStorage<T>(key);
+
   const updatedItems = items.map((item) => (matchFn(item) ? newItem : item));
 
   await AsyncStorage.setItem(key, JSON.stringify(updatedItems));

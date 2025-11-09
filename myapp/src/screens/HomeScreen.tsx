@@ -1,12 +1,17 @@
 // screens/HomeScreen.tsx
-import React, { useRef, useState, useMemo, useEffect } from "react";
+import React, {
+  useRef,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   Alert,
   Keyboard,
   TouchableWithoutFeedback,
@@ -39,6 +44,7 @@ import {
   calculateUsableAmountParDay,
 } from "../util/displayUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen() {
   // const todayUsable = 3500;
@@ -139,64 +145,74 @@ export default function HomeScreen() {
     })();
   }, [isIncomeMode, showCategoryListModal]);
 
-  //目標金額
-  useEffect(() => {
-    (async () => {
-      try {
-        const storedExpenses = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.EXPENSES
+  const fetchAndCalculate = async () => {
+    try {
+      const storedExpenses = await getItemsFromStorage<Expense>(
+        STORAGE_KEYS.EXPENSES
+      );
+      const storedIncomes = await getItemsFromStorage<Expense>(
+        STORAGE_KEYS.INCOMES
+      );
+      const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
+        STORAGE_KEYS.SAVING_GOAL
+      );
+      const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
+        STORAGE_KEYS.REGULARLY_INCOMES
+      );
+      const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
+        STORAGE_KEYS.REGULARLY_EXPENSES
+      );
+
+      // state に保存
+      setExpenses(storedExpenses);
+      setIncomes(storedIncomes);
+
+      if (storedSavingGoal.length > 0) {
+        const savingGoal = storedSavingGoal[0];
+        setSavingGoal(savingGoal);
+
+        const calculatedRemainingDays = calculateRemainingDays(
+          savingGoal.deadline
+        );
+        setRemainingDays(calculatedRemainingDays);
+
+        const totalDays = calculateTotalDays(
+          savingGoal.deadline,
+          savingGoal.createdAt
+        );
+        setTotalDays(totalDays);
+
+        const calculatedUsableAmountParDay = calculateUsableAmountParDay(
+          savingGoal.amount,
+          storedRegularyExpenses,
+          storedRegularyIncomes,
+          calculatedRemainingDays
         );
 
-        const storedIncomes = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.INCOMES
+        const calculatedTodayUsableAmount = calculateTodayUsableAmount(
+          calculatedUsableAmountParDay,
+          storedExpenses,
+          storedIncomes,
+          savingGoal.createdAt
         );
 
-        const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-          STORAGE_KEYS.SAVING_GOAL
-        );
-
-        const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
-          STORAGE_KEYS.REGULARLY_INCOMES
-        );
-
-        const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
-          STORAGE_KEYS.REGULARLY_EXPENSES
-        );
-
-        if (storedSavingGoal.length > 0) {
-          const savingGoal = storedSavingGoal[0];
-          setSavingGoal(savingGoal);
-          const calculatedRemainingDays = calculateRemainingDays(
-            savingGoal.deadline
-          );
-          setRemainingDays(calculatedRemainingDays);
-
-          const totalDays = calculateTotalDays(
-            savingGoal.deadline,
-            savingGoal.createdAt
-          );
-          setTotalDays(totalDays);
-
-          const calculatedUsableAmountParDay = calculateUsableAmountParDay(
-            savingGoal.amount,
-            storedRegularyExpenses,
-            storedRegularyIncomes,
-            calculatedRemainingDays
-          );
-
-          const calculatedTodayUsableAmount = calculateTodayUsableAmount(
-            calculatedUsableAmountParDay,
-            storedExpenses,
-            storedIncomes,
-            storedSavingGoal[0].createdAt
-          );
-
-          setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
-        }
-      } catch (e) {
-        console.error("支出データ読み込みエラー:", e);
+        setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
       }
-    })();
+    } catch (e) {
+      console.error("支出データ読み込みエラー:", e);
+    }
+  };
+
+  // 画面フォーカス時に実行
+  useFocusEffect(
+    useCallback(() => {
+      fetchAndCalculate();
+    }, [])
+  );
+
+  // remainingDays, expenses, incomes に依存して再計算
+  useEffect(() => {
+    fetchAndCalculate();
   }, [remainingDays, expenses, incomes]);
 
   const handleAddExpenseOrIncome = async () => {

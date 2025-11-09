@@ -19,6 +19,12 @@ import { Expense, Category } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { getTodayLocal } from "../util/dateUtils";
+import CategorySelector from "../components/CategorySelector";
+import {
+  handleCategoryReorder,
+  handleCategoryDelete,
+  handleCategoryEditOnSave,
+} from "../util/categoryUtils";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -47,6 +53,7 @@ export default function BudgetScreen() {
             getItemsFromStorage<Category>(STORAGE_KEYS.EXPENSE_CATEGORIES),
             getItemsFromStorage<Category>(STORAGE_KEYS.INCOME_CATEGORIES),
           ]);
+
           setExpenses(storedExpenses);
           setExpenseCategories(storedExpenseCategories);
           setIncomeCategories(storedIncomeCategories);
