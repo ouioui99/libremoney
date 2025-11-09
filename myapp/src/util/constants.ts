@@ -19,7 +19,7 @@ export const STORAGE_KEYS = {
   SAVING_GOAL: "saving_goal",
 };
 
-export const DEFAULT_CATEGORIES: Category[] = [
+export const DEFAULT_EXPENSE_CATEGORIES: Category[] = [
   { id: "1", name: "食費", icon: "fast-food-outline", order: "1" },
   { id: "2", name: "交通", icon: "bus-outline", order: "2" },
   { id: "3", name: "日用品", icon: "cart-outline", order: "3" },

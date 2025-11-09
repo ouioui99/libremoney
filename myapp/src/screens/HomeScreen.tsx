@@ -36,7 +36,7 @@ import {
 } from "../util/dateUtils";
 import {
   calculateTodayUsableAmount,
-  calculateTotalUsableAmount,
+  calculateUsableAmountParDay,
 } from "../util/displayUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -73,6 +73,7 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const c = colors[theme];
 
+  //カテゴリーと収支モード変換
   useEffect(() => {
     //開発用
     // AsyncStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify([]));
@@ -102,18 +103,6 @@ export default function HomeScreen() {
           STORAGE_KEYS.INCOME_CATEGORIES
         );
 
-        const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-          STORAGE_KEYS.SAVING_GOAL
-        );
-
-        const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
-          STORAGE_KEYS.REGULARLY_INCOMES
-        );
-
-        const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
-          STORAGE_KEYS.REGULARLY_EXPENSES
-        );
-
         // order プロパティでソート
         const sortedExpenseCategories = (storedExpenseCategories || [])
           .slice()
@@ -139,6 +128,41 @@ export default function HomeScreen() {
           setIncomeCategories(sortedIncomeCategories);
         }
 
+        if (isIncomeMode) {
+          setDisplaiedCategories(sortedIncomeCategories);
+        } else {
+          setDisplaiedCategories(sortedExpenseCategories);
+        }
+      } catch (e) {
+        console.error("支出データ読み込みエラー:", e);
+      }
+    })();
+  }, [isIncomeMode, showCategoryListModal]);
+
+  //目標金額
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedExpenses = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.EXPENSES
+        );
+
+        const storedIncomes = await getItemsFromStorage<Expense>(
+          STORAGE_KEYS.INCOMES
+        );
+
+        const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
+          STORAGE_KEYS.SAVING_GOAL
+        );
+
+        const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
+          STORAGE_KEYS.REGULARLY_INCOMES
+        );
+
+        const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
+          STORAGE_KEYS.REGULARLY_EXPENSES
+        );
+
         if (storedSavingGoal.length > 0) {
           const savingGoal = storedSavingGoal[0];
           setSavingGoal(savingGoal);
@@ -153,35 +177,27 @@ export default function HomeScreen() {
           );
           setTotalDays(totalDays);
 
-          const calculatedTodayUsableAmount = calculateTodayUsableAmount(
+          const calculatedUsableAmountParDay = calculateUsableAmountParDay(
             savingGoal.amount,
             storedRegularyExpenses,
             storedRegularyIncomes,
-            // storedExpenses,
-            // storedIncomes,
             calculatedRemainingDays
           );
 
-          setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
-          calculateTotalUsableAmount(
-            calculatedTodayUsableAmount,
-            totalDays,
+          const calculatedTodayUsableAmount = calculateTodayUsableAmount(
+            calculatedUsableAmountParDay,
             storedExpenses,
             storedIncomes,
             storedSavingGoal[0].createdAt
           );
-        }
 
-        if (isIncomeMode) {
-          setDisplaiedCategories(sortedIncomeCategories);
-        } else {
-          setDisplaiedCategories(sortedExpenseCategories);
+          setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
         }
       } catch (e) {
         console.error("支出データ読み込みエラー:", e);
       }
     })();
-  }, [isIncomeMode, showCategoryListModal, remainingDays]);
+  }, [remainingDays, expenses, incomes]);
 
   const handleAddExpenseOrIncome = async () => {
     if (!expense || !selectedCategory) return;

@@ -105,7 +105,11 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
       style={[styles.container, { backgroundColor: c.background }]}
     >
       {/* ヘッダー */}
-      <CustumHeader title="定期収入設定" navigation={navigation} />
+      <CustumHeader
+        title="定期収入設定"
+        navigation={navigation}
+        type="income"
+      />
       {/* 追加フォーム */}
       <RegularIncomeAndExpenseForm
         categoryId={categoryId}

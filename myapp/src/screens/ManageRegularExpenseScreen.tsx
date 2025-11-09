@@ -105,7 +105,11 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
       style={[styles.container, { backgroundColor: c.background }]}
     >
       {/* ヘッダー */}
-      <CustumHeader title="定期支出設定" navigation={navigation} />
+      <CustumHeader
+        title="定期支出設定"
+        navigation={navigation}
+        type="expense"
+      />
       {/* 追加フォーム */}
       <RegularIncomeAndExpenseForm
         categoryId={categoryId}

@@ -7,9 +7,11 @@ import { useTheme } from "../contexts/ThemeContext";
 export default function CustomHeader({
   title,
   navigation,
+  type,
 }: {
   title: string;
   navigation: any;
+  type?: "income" | "expense";
 }) {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -33,7 +35,21 @@ export default function CustomHeader({
         <Text style={styles.backText}>戻る</Text>
       </TouchableOpacity>
 
-      <Text style={[styles.headerTitle, { color: c.text }]}>{title}</Text>
+      <Text
+        style={[
+          styles.headerTitle,
+          {
+            color:
+              type === "income"
+                ? c.income
+                : type === "expense"
+                ? c.expense
+                : c.text,
+          },
+        ]}
+      >
+        {title}
+      </Text>
 
       {/* バランス用スペーサー */}
       <View style={{ width: 70 }} />
