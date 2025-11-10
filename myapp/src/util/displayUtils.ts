@@ -76,7 +76,7 @@ export const calculateTodayUsableAmount = (
   const resultAmount =
     totalAllUsableAmount + sumIncomesAfterStarted - sumExpensesAfterStarted;
 
-  console.log(resultAmount);
+  console.log("resultAmount");
 
   return resultAmount;
 };

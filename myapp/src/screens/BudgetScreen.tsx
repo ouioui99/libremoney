@@ -19,63 +19,63 @@ import { Expense, Category } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { getTodayLocal } from "../util/dateUtils";
-import CategorySelector from "../components/CategorySelector";
-import {
-  handleCategoryReorder,
-  handleCategoryDelete,
-  handleCategoryEditOnSave,
-} from "../util/categoryUtils";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const c = colors[theme];
 
+  const [selectedTab, setSelectedTab] = useState<"expense" | "income">(
+    "expense"
+  );
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<Expense[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayLocal());
 
-  // ✅ 画面表示時・フォーカス時に支出＆カテゴリーを読み込み
+  // ✅ データ読み込み関数を再利用できるように外に出す
+  const loadData = useCallback(async () => {
+    try {
+      const [
+        storedExpenses,
+        storedIncomes,
+        storedExpenseCategories,
+        storedIncomeCategories,
+      ] = await Promise.all([
+        getItemsFromStorage<Expense>(STORAGE_KEYS.EXPENSES),
+        getItemsFromStorage<Expense>(STORAGE_KEYS.INCOMES),
+        getItemsFromStorage<Category>(STORAGE_KEYS.EXPENSE_CATEGORIES),
+        getItemsFromStorage<Category>(STORAGE_KEYS.INCOME_CATEGORIES),
+      ]);
+
+      setExpenses(storedExpenses);
+      setIncomes(storedIncomes);
+      setExpenseCategories(storedExpenseCategories);
+      setIncomeCategories(storedIncomeCategories);
+    } catch (e) {
+      console.error("データ読み込みエラー:", e);
+    }
+  }, []);
+
+  // ✅ フォーカス時に読み込み
   useFocusEffect(
     useCallback(() => {
-      const loadData = async () => {
-        try {
-          const [
-            storedExpenses,
-            storedExpenseCategories,
-            storedIncomeCategories,
-          ] = await Promise.all([
-            getItemsFromStorage<Expense>(STORAGE_KEYS.EXPENSES),
-            getItemsFromStorage<Category>(STORAGE_KEYS.EXPENSE_CATEGORIES),
-            getItemsFromStorage<Category>(STORAGE_KEYS.INCOME_CATEGORIES),
-          ]);
-
-          setExpenses(storedExpenses);
-          setExpenseCategories(storedExpenseCategories);
-          setIncomeCategories(storedIncomeCategories);
-        } catch (e) {
-          console.error("データ読み込みエラー:", e);
-        }
-      };
       loadData();
-    }, [])
+    }, [loadData])
   );
 
-  // ✅ 支出がある日付にドットを付ける
+  // ✅ 支出・収入ごとのマーク
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
+    const list = selectedTab === "expense" ? expenses : incomes;
 
-    expenses.forEach((e) => {
-      if (!marks[e.date]) {
-        marks[e.date] = {
-          marked: true,
-          dots: [{ color: c.accent }],
-        };
-      }
+    list.forEach((e) => {
+      if (!marks[e.date])
+        marks[e.date] = { marked: true, dots: [{ color: c.accent }] };
     });
 
     if (selectedDate) {
@@ -88,19 +88,74 @@ export default function BudgetScreen() {
     }
 
     return marks;
-  }, [expenses, selectedDate, c]);
+  }, [expenses, incomes, selectedTab, selectedDate, c]);
 
-  // ✅ 選択された日の支出のみ
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((e) => e.date === selectedDate);
-  }, [expenses, selectedDate]);
+  // ✅ 選択された日のデータ
+  const filteredData = useMemo(() => {
+    const list = selectedTab === "expense" ? expenses : incomes;
+    return list.filter((e) => e.date === selectedDate);
+  }, [selectedTab, expenses, incomes, selectedDate]);
+
+  const categories =
+    selectedTab === "expense" ? expenseCategories : incomeCategories;
+
+  // ✅ モーダル保存時の処理
+  const handleSave = async (updated: Expense) => {
+    if (selectedTab === "expense") {
+      setExpenses((prev) =>
+        prev.map((e) => (e.id === updated.id ? updated : e))
+      );
+    } else {
+      setIncomes((prev) =>
+        prev.map((e) => (e.id === updated.id ? updated : e))
+      );
+    }
+
+    // ストレージから再読み込み（即時反映）
+    await loadData();
+  };
 
   return (
     <SafeAreaLayout
       style={{ flex: 1, backgroundColor: c.background, paddingHorizontal: 16 }}
     >
+      {/* トグル（タブ風） */}
+      <View
+        style={[
+          styles.tabContainer,
+          { marginTop: insets.top + 8, paddingHorizontal: 8 },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => setSelectedTab("expense")}
+          style={[
+            styles.tabButton,
+            {
+              backgroundColor:
+                selectedTab === "expense" ? c.expense : c.secondary,
+            },
+          ]}
+        >
+          <Text style={{ color: c.text }}>支出</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setSelectedTab("income")}
+          style={[
+            styles.tabButton,
+            {
+              backgroundColor:
+                selectedTab === "income" ? c.income : c.secondary,
+            },
+          ]}
+        >
+          <Text style={{ color: c.text }}>収入</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* カレンダー */}
       <Calendar
+        key={theme}
         onDayPress={(day) => setSelectedDate(day.dateString)}
         markingType="multi-dot"
         markedDates={markedDates}
@@ -113,126 +168,127 @@ export default function BudgetScreen() {
           todayTextColor: c.accent,
           arrowColor: c.accent,
         }}
-        style={{
-          marginBottom: 12,
-          marginTop: insets.top,
-        }}
+        style={{ marginBottom: 12 }}
       />
+      <View style={{ paddingHorizontal: 8 }}>
+        {/* 一覧タイトル */}
+        <Text style={[styles.label, { color: c.text, marginBottom: 8 }]}>
+          {selectedDate} の{selectedTab === "expense" ? "支出" : "収入"}一覧
+        </Text>
 
-      {/* 支出一覧 */}
-      <Text
-        style={[
-          styles.label,
-          { color: c.text, marginTop: 20, marginBottom: 8 },
-        ]}
-      >
-        {selectedDate} の支出一覧
-      </Text>
-
-      {filteredExpenses.length === 0 ? (
-        <Text style={{ color: c.placeholder }}>この日の支出はありません</Text>
-      ) : (
-        <FlatList
-          data={filteredExpenses}
-          keyExtractor={(item) => item.id}
-          style={{ flex: 1 }}
-          renderItem={({ item, index }) => {
-            const category = getCategory(expenseCategories, item.categoryId);
-
-            return (
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedExpense(item);
-                  setShowEditModal(true);
-                }}
-              >
-                <View
-                  style={[
-                    styles.expenseItem,
-                    {
-                      backgroundColor:
-                        index % 2 !== 0
-                          ? c.card
-                          : theme === "dark"
-                          ? `${c.secondary}60`
-                          : `${c.secondary}90`,
-                      flexDirection: "column",
-                      paddingHorizontal: 12,
-                    },
-                  ]}
+        {/* 一覧 */}
+        {filteredData.length === 0 ? (
+          <Text style={{ color: c.placeholder }}>
+            この日の{selectedTab === "expense" ? "支出" : "収入"}はありません
+          </Text>
+        ) : (
+          <FlatList
+            data={filteredData}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => {
+              const category = getCategory(categories, item.categoryId);
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedExpense(item);
+                    setShowEditModal(true);
+                  }}
                 >
                   <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
+                    style={[
+                      styles.expenseItem,
+                      {
+                        backgroundColor:
+                          index % 2 !== 0
+                            ? c.card
+                            : theme === "dark"
+                            ? `${c.secondary}60`
+                            : `${c.secondary}90`,
+                        paddingHorizontal: 12,
+                      },
+                    ]}
                   >
-                    {/* 金額 */}
-                    <Text style={[styles.expenseText, { color: c.text }]}>
-                      ¥{item.amount.toLocaleString()}
-                    </Text>
-                    {category && (
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 4, // ← アイコンとテキストの間に少し余白
-                        }}
-                      >
-                        <Ionicons
-                          name={category.icon}
-                          size={18}
-                          color={c.accent}
-                        />
-                        <Text
-                          style={[styles.categoryText, { color: c.accent }]}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={[styles.expenseText, { color: c.text }]}>
+                        ¥{item.amount.toLocaleString()}
+                      </Text>
+                      {category && (
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 4,
+                          }}
                         >
-                          {category.name}
-                        </Text>
-                      </View>
-                    )}
+                          <Ionicons
+                            name={category.icon}
+                            size={18}
+                            color={c.accent}
+                          />
+                          <Text
+                            style={[styles.categoryText, { color: c.accent }]}
+                          >
+                            {category.name}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text
+                      style={{
+                        color: c.placeholder,
+                        fontSize: 14,
+                        marginTop: 4,
+                      }}
+                    >
+                      📝 {item.memo}
+                    </Text>
                   </View>
-
-                  {/* メモ */}
-                  <Text
-                    style={{
-                      color: c.placeholder,
-                      fontSize: 14,
-                      marginTop: 4,
-                    }}
-                  >
-                    📝 {item.memo}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
+      </View>
 
       {/* 編集モーダル */}
       <EditExpenseModal
         visible={showEditModal}
         expense={selectedExpense}
         onClose={() => setShowEditModal(false)}
-        onSave={(updated) => {
-          setExpenses((prev) =>
-            prev.map((e) => (e.id === updated.id ? updated : e))
-          );
-        }}
+        onSave={handleSave}
+        isIncome={selectedTab !== "expense"}
       />
     </SafeAreaLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  tabContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 12,
+    gap: 8,
+  },
+  tabButton: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 8,
+    alignItems: "center",
+  },
   label: {
     fontSize: 16,
     fontWeight: "600",
   },
   expenseItem: {
     paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 6,
   },
   expenseText: {
     fontSize: 16,

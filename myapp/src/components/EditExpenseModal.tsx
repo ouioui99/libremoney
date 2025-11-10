@@ -36,6 +36,7 @@ type Props = {
   expense: Expense | null;
   onClose: () => void;
   onSave: (updated: Expense) => void;
+  isIncome: boolean;
 };
 
 export default function EditExpenseModal({
@@ -43,6 +44,7 @@ export default function EditExpenseModal({
   expense,
   onClose,
   onSave,
+  isIncome,
 }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -59,6 +61,16 @@ export default function EditExpenseModal({
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
 
+  const CATEGORY_STORAGE_KEYS = isIncome
+    ? STORAGE_KEYS.INCOME_CATEGORIES
+    : STORAGE_KEYS.EXPENSE_CATEGORIES;
+
+  const EXPENSE_INCOME_STORAGE_KEYS = isIncome
+    ? STORAGE_KEYS.INCOMES
+    : STORAGE_KEYS.EXPENSES;
+
+  const displayText = isIncome ? "収入" : "支出";
+
   // 編集対象データが変わるたびに反映
   useEffect(() => {
     if (expense) {
@@ -74,20 +86,15 @@ export default function EditExpenseModal({
     (async () => {
       try {
         const storedCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.EXPENSE_CATEGORIES
+          CATEGORY_STORAGE_KEYS
         );
         setCategories(storedCategories);
 
         const storedExpenses = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.EXPENSES
-        );
-
-        const storedIncomes = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.INCOMES
+          EXPENSE_INCOME_STORAGE_KEYS
         );
 
         setExpenses(storedExpenses);
-        setIncomes(storedIncomes);
       } catch (e) {
         console.error("カテゴリー読み込みエラー:", e);
       }
@@ -114,10 +121,8 @@ export default function EditExpenseModal({
     };
 
     try {
-      console.log({ updatedExpense });
-
       await editItemInStorage<Expense>(
-        STORAGE_KEYS.EXPENSES,
+        EXPENSE_INCOME_STORAGE_KEYS,
         (item) => item.id === expense.id,
         updatedExpense
       );
@@ -141,7 +146,7 @@ export default function EditExpenseModal({
           try {
             // removeItemFromStorage を使用して削除
             const updatedExpenses = await removeItemFromStorage<Expense>(
-              STORAGE_KEYS.EXPENSES,
+              EXPENSE_INCOME_STORAGE_KEYS,
               (item) => item.id === expense.id
             );
 
@@ -192,7 +197,7 @@ export default function EditExpenseModal({
               }}
             >
               <Text style={{ color: c.text, fontSize: 18, fontWeight: "bold" }}>
-                支出を編集
+                {displayText}を編集
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color={c.text} />

@@ -163,10 +163,6 @@ export default function HomeScreen() {
         STORAGE_KEYS.REGULARLY_EXPENSES
       );
 
-      // state に保存
-      setExpenses(storedExpenses);
-      setIncomes(storedIncomes);
-
       if (storedSavingGoal.length > 0) {
         const savingGoal = storedSavingGoal[0];
         setSavingGoal(savingGoal);
