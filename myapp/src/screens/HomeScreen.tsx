@@ -290,7 +290,10 @@ export default function HomeScreen() {
               }}
             >
               <TouchableOpacity
-                onPress={() => setIsIncomeMode(false)}
+                onPress={() => {
+                  setIsIncomeMode(false);
+                  setSelectedCategory(undefined);
+                }}
                 style={{
                   flex: 1,
                   padding: 8,
@@ -303,7 +306,10 @@ export default function HomeScreen() {
                 <Text style={{ color: c.text }}>支出</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setIsIncomeMode(true)}
+                onPress={() => {
+                  setIsIncomeMode(true);
+                  setSelectedCategory(undefined);
+                }}
                 style={{
                   flex: 1,
                   padding: 8,
@@ -384,11 +390,30 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[
                 styles.button,
-                { backgroundColor: isIncomeMode ? c.income : c.expense },
+                {
+                  backgroundColor:
+                    !selectedCategory || !expense
+                      ? c.secondary // 無効時はグレー背景
+                      : isIncomeMode
+                      ? c.income
+                      : c.expense,
+                  opacity: !selectedCategory || !expense ? 0.5 : 1, // 視覚的に無効化
+                },
               ]}
               onPress={handleAddExpenseOrIncome}
+              disabled={!selectedCategory || !expense} // ←無効化条件
             >
-              <Text style={styles.buttonText}>登録</Text>
+              <Text
+                style={[
+                  styles.buttonText,
+                  {
+                    color:
+                      !selectedCategory || !expense ? c.placeholder : "#fff", // 無効時は淡い文字
+                  },
+                ]}
+              >
+                登録
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableWithoutFeedback>
