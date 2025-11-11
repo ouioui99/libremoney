@@ -14,7 +14,7 @@ interface CategorySelectorProps {
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   selectedCategoryId?: string;
-  onSelect: (categoryId: string) => void;
+  onSelect: (category: Category) => void;
   onReorder: (
     newList: Category[],
     setCategories: (value: React.SetStateAction<Category[]>) => void,
@@ -60,8 +60,8 @@ export default function CategorySelector({
         visible={showCategoryModal}
         categories={categories}
         onClose={() => setShowCategoryModal(false)}
-        onSelect={(categoryId) => {
-          onSelect(categoryId);
+        onSelect={(category) => {
+          onSelect(category);
           setShowCategoryModal(false);
         }}
         onEdit={() => {

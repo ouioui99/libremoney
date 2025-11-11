@@ -1,11 +1,5 @@
 // screens/HomeScreen.tsx
-import React, {
-  useRef,
-  useState,
-  useMemo,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -43,13 +37,9 @@ import {
   calculateTodayUsableAmount,
   calculateUsableAmountParDay,
 } from "../util/displayUtils";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen() {
-  // const todayUsable = 3500;
-
-  const [todayUsable, setTodayUsable] = useState(3000);
   const [expense, setExpense] = useState("");
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Expense[]>([]);
@@ -248,21 +238,21 @@ export default function HomeScreen() {
   const progress = (totalDays - remainingDays) / totalDays;
 
   /** ✅ カテゴリーごとの合計金額を算出 */
-  const categoryTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    expenseCategories.forEach((cat) => (totals[cat.id] = 0));
+  // const categoryTotals = useMemo(() => {
+  //   const totals: Record<string, number> = {};
+  //   expenseCategories.forEach((cat) => (totals[cat.id] = 0));
 
-    expenses.forEach((e) => {
-      const catId = e.categoryId;
-      if (catId && totals.hasOwnProperty(catId)) {
-        totals[catId] += e.amount;
-      }
-    });
+  //   expenses.forEach((e) => {
+  //     const catId = e.categoryId;
+  //     if (catId && totals.hasOwnProperty(catId)) {
+  //       totals[catId] += e.amount;
+  //     }
+  //   });
 
-    return totals;
-  }, [expenses, expenseCategories]);
+  //   return totals;
+  // }, [expenses, expenseCategories]);
 
-  const maxAmount = Math.max(...Object.values(categoryTotals), 1);
+  // const maxAmount = Math.max(...Object.values(categoryTotals), 1);
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background, flex: 1 }}>
@@ -578,7 +568,7 @@ export default function HomeScreen() {
             isIncomeMode ? setIncomeCategories : setExpenseCategories
           }
           selectedCategoryId={categoryId}
-          onSelect={(id: string) => setCategoryId(id)}
+          onSelect={(category: Category) => setSelectedCategory(category)}
           onReorder={handleCategoryReorder}
           onDelete={handleCategoryDelete}
           onEditSave={handleCategoryEditOnSave}

@@ -19,7 +19,7 @@ interface Props {
   visible: boolean;
   categories: Category[];
   onClose: () => void;
-  onSelect: (category: string) => void;
+  onSelect: (category: Category) => void;
   onEdit: () => void; // 追加/編集ボタンのコールバック
 }
 
@@ -96,7 +96,7 @@ export default function CategoryModal({
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
-                    onSelect(item.id);
+                    onSelect(item);
                     onClose();
                   }}
                   style={{
