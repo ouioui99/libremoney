@@ -31,8 +31,7 @@ export const calculateUsableAmountParDay = (
   const usableAmountPerDay =
     (totalIncome - totalExpense - targetAmount) / remainingDays;
 
-  // マイナスになった場合は0円扱い
-  return Math.max(0, Math.floor(usableAmountPerDay));
+  return Math.floor(usableAmountPerDay);
 };
 
 /**
@@ -75,8 +74,6 @@ export const calculateTodayUsableAmount = (
 
   const resultAmount =
     totalAllUsableAmount + sumIncomesAfterStarted - sumExpensesAfterStarted;
-
-  console.log("resultAmount");
 
   return resultAmount;
 };
