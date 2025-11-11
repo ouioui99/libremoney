@@ -14,7 +14,7 @@ export const colors = {
     border: "#B2DFDB", // ボタン枠やカード枠
     placeholder: "#A0A0A0", // 入力欄のプレースホルダー
     success: "#4CAF50", // 成功表示
-    error: "#F44336", // エラー表示
+    error: "#E57373", // エラー表示
     warning: "#FF9800", // 警告表示
     info: "#26C6DA", // 情報表示
   },
@@ -32,7 +32,7 @@ export const colors = {
     border: "#264141",
     placeholder: "#888888",
     success: "#66BB6A",
-    error: "#EF5350",
+    error: "#C75C5C",
     warning: "#FFA726",
     info: "#26C6DA",
   },

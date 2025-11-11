@@ -175,86 +175,88 @@ export default function BudgetScreen() {
         <Text style={[styles.label, { color: c.text, marginBottom: 8 }]}>
           {selectedDate} の{selectedTab === "expense" ? "支出" : "収入"}一覧
         </Text>
+      </View>
 
-        {/* 一覧 */}
-        {filteredData.length === 0 ? (
+      {/* 一覧 */}
+      {filteredData.length === 0 ? (
+        <View style={{ paddingHorizontal: 8 }}>
           <Text style={{ color: c.placeholder }}>
             この日の{selectedTab === "expense" ? "支出" : "収入"}はありません
           </Text>
-        ) : (
-          <FlatList
-            data={filteredData}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => {
-              const category = getCategory(categories, item.categoryId);
-              return (
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedExpense(item);
-                    setShowEditModal(true);
-                  }}
+        </View>
+      ) : (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => {
+            const category = getCategory(categories, item.categoryId);
+            return (
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedExpense(item);
+                  setShowEditModal(true);
+                }}
+              >
+                <View
+                  style={[
+                    styles.expenseItem,
+                    {
+                      backgroundColor:
+                        index % 2 !== 0
+                          ? c.card
+                          : theme === "dark"
+                          ? `${c.secondary}60`
+                          : `${c.secondary}90`,
+                      paddingHorizontal: 12,
+                    },
+                  ]}
                 >
                   <View
-                    style={[
-                      styles.expenseItem,
-                      {
-                        backgroundColor:
-                          index % 2 !== 0
-                            ? c.card
-                            : theme === "dark"
-                            ? `${c.secondary}60`
-                            : `${c.secondary}90`,
-                        paddingHorizontal: 12,
-                      },
-                    ]}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Text style={[styles.expenseText, { color: c.text }]}>
-                        ¥{item.amount.toLocaleString()}
-                      </Text>
-                      {category && (
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 4,
-                          }}
-                        >
-                          <Ionicons
-                            name={category.icon}
-                            size={18}
-                            color={c.accent}
-                          />
-                          <Text
-                            style={[styles.categoryText, { color: c.accent }]}
-                          >
-                            {category.name}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text
-                      style={{
-                        color: c.placeholder,
-                        fontSize: 14,
-                        marginTop: 4,
-                      }}
-                    >
-                      📝 {item.memo}
+                    <Text style={[styles.expenseText, { color: c.text }]}>
+                      ¥{item.amount.toLocaleString()}
                     </Text>
+                    {category && (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <Ionicons
+                          name={category.icon}
+                          size={18}
+                          color={c.accent}
+                        />
+                        <Text
+                          style={[styles.categoryText, { color: c.accent }]}
+                        >
+                          {category.name}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                </TouchableOpacity>
-              );
-            }}
-          />
-        )}
-      </View>
+                  <Text
+                    style={{
+                      color: c.placeholder,
+                      fontSize: 14,
+                      marginTop: 4,
+                    }}
+                  >
+                    📝 {item.memo}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
 
       {/* 編集モーダル */}
       <EditExpenseModal
@@ -287,8 +289,6 @@ const styles = StyleSheet.create({
   },
   expenseItem: {
     paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 6,
   },
   expenseText: {
     fontSize: 16,

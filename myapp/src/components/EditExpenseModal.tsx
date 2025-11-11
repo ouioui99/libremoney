@@ -54,7 +54,7 @@ export default function EditExpenseModal({
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>();
+  const [selectedCategory, setSelectedCategory] = useState<Category>();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Expense[]>([]);
 
@@ -77,7 +77,6 @@ export default function EditExpenseModal({
       setAmount(String(expense.amount));
       setMemo(expense.memo ?? "");
       setDate(expense.date);
-      setSelectedCategory(expense.categoryId ?? null);
     }
   }, [expense]);
 
@@ -92,6 +91,12 @@ export default function EditExpenseModal({
 
         const storedExpenses = await getItemsFromStorage<Expense>(
           EXPENSE_INCOME_STORAGE_KEYS
+        );
+
+        setSelectedCategory(
+          storedCategories.find(
+            (category) => category.id === expense?.categoryId
+          )
         );
 
         setExpenses(storedExpenses);
@@ -117,7 +122,7 @@ export default function EditExpenseModal({
       amount: parseFloat(amount),
       memo,
       date,
-      categoryId: selectedCategory,
+      categoryId: selectedCategory.id,
     };
 
     try {
@@ -284,17 +289,17 @@ export default function EditExpenseModal({
                   key={cat.id}
                   style={{
                     backgroundColor:
-                      selectedCategory === cat.id ? c.accent : c.secondary,
+                      selectedCategory?.id === cat.id ? c.accent : c.secondary,
                     paddingVertical: 8,
                     paddingHorizontal: 14,
                     borderRadius: 20,
                     marginRight: 8,
                   }}
-                  onPress={() => setSelectedCategory(cat.id)}
+                  onPress={() => setSelectedCategory(cat)}
                 >
                   <Text
                     style={{
-                      color: selectedCategory === cat.id ? "#fff" : c.text,
+                      color: selectedCategory?.id === cat.id ? "#fff" : c.text,
                     }}
                   >
                     {cat.name}
@@ -335,7 +340,7 @@ export default function EditExpenseModal({
             >
               <Text
                 style={{
-                  color: c.text,
+                  color: c.textOnAccent,
                   fontSize: 18,
                   fontWeight: "bold",
                 }}
@@ -373,8 +378,8 @@ export default function EditExpenseModal({
       <CategorySelector
         categories={categories}
         setCategories={setCategories}
-        selectedCategoryId={selectedCategory}
-        onSelect={(id: string) => setSelectedCategory(id)}
+        selectedCategoryId={selectedCategory?.id}
+        onSelect={(category: Category) => setSelectedCategory(category)}
         onReorder={handleCategoryReorder}
         onDelete={handleCategoryDelete}
         onEditSave={handleCategoryEditOnSave}
