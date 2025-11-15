@@ -38,6 +38,7 @@ export default function ExpenseScreen() {
   const [calculating, setCalculating] = useState(false);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<Category>();
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -256,12 +257,16 @@ export default function ExpenseScreen() {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
+      if (!selectedCategory) {
+        Alert.alert("エラー", "カテゴリーを選択してください");
+        return;
+      }
 
       const newItem = {
         id: newId,
         amount,
         date,
-        categoryId,
+        categoryId: selectedCategory.id,
         memo,
       };
       const newItems = await addItemToStorage(storageKey, expenses, newItem);
@@ -276,16 +281,12 @@ export default function ExpenseScreen() {
       setExpression("");
       setMemo("");
       setCalculating(false);
+      setSelectedCategory(undefined);
     } catch (error) {
       console.error("保存エラー:", error);
       Alert.alert("エラー", "保存に失敗しました");
     }
   };
-
-  const selectedCategory = getCategory(
-    isIncomeMode ? incomeCategories : expenseCategories,
-    categoryId
-  );
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
@@ -409,8 +410,8 @@ export default function ExpenseScreen() {
             setCategories={
               isIncomeMode ? setIncomeCategories : setExpenseCategories
             }
-            selectedCategoryId={categoryId}
-            onSelect={(id: string) => setCategoryId(id)}
+            selectedCategoryId={selectedCategory?.id}
+            onSelect={(category: Category) => setSelectedCategory(category)}
             onReorder={handleCategoryReorder}
             onDelete={handleCategoryDelete}
             onEditSave={handleCategoryEditOnSave}
