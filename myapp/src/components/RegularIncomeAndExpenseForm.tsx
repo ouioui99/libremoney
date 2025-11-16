@@ -17,21 +17,24 @@ import { Category, CycleRule } from "../types/models";
 import CycleRuleSettingModal from "./CycleRuleSettingModal";
 
 type Props = {
-  categoryId: string;
-  setCategoryId: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedCategory: React.Dispatch<
+    React.SetStateAction<Category | undefined>
+  >;
+  selectedCategory?: Category;
   categories: Category[];
   onAdd: (
     amount: number,
     memo: string,
     categoryId: string,
+
     cycleRule: CycleRule["type"]
   ) => void;
   onPressCategorySelect: () => void;
 };
 
 const RegularIncomeAndExpenseForm: React.FC<Props> = ({
-  categoryId,
-  setCategoryId,
+  selectedCategory,
+  setSelectedCategory,
   categories,
   onAdd,
   onPressCategorySelect,
@@ -45,16 +48,16 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   const [showCycleRuleSettingModal, setShowCycleRuleSettingModal] =
     useState(false);
 
-  const selectedCategory = categories.find((cat) => cat.id === categoryId);
-
   const handleSubmit = () => {
     if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
     if (!cycleRuleType)
       return Alert.alert("入力エラー", "サイクルルールを設定してください");
-    onAdd(Number(amount), memo, categoryId, cycleRuleType);
+    if (!selectedCategory)
+      return Alert.alert("入力エラー", "カテゴリーを設定してください");
+    onAdd(Number(amount), memo, selectedCategory.id, cycleRuleType);
     setAmount("");
     setMemo("");
-    setCategoryId("");
+    setSelectedCategory(undefined);
     setCycleRuleType(undefined);
   };
 

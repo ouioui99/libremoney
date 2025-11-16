@@ -21,10 +21,9 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const [amount, setAmount] = useState("");
-  const [memo, setMemo] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category>();
   const [incomes, setIncomes] = useState<RegularIncome[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -64,26 +63,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
     );
   };
 
-  const handleAdd = () => {
-    if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
-    if (!cycleRuleType)
-      return Alert.alert("入力エラー", "サイクルルールを設定してください");
-
-    const newIncome: RegularIncome = {
-      id: Date.now().toString(),
-      amount: Number(amount),
-      memo,
-      categoryId,
-      cycleRule: { type: cycleRuleType },
-    };
-
-    const updated = [...incomes, newIncome];
-    saveIncomes(updated);
-    setAmount("");
-    setMemo("");
-    setCategoryId("");
-  };
-
   const handleDelete = (id: string) => {
     Alert.alert("削除確認", "この収入を削除しますか？", [
       { text: "キャンセル", style: "cancel" },
@@ -98,8 +77,6 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
     ]);
   };
 
-  const selectedCategory = categories.find((cat) => cat.id === categoryId);
-
   return (
     <SafeAreaLayout
       style={[styles.container, { backgroundColor: c.background }]}
@@ -112,8 +89,8 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
       />
       {/* 追加フォーム */}
       <RegularIncomeAndExpenseForm
-        categoryId={categoryId}
-        setCategoryId={setCategoryId}
+        setSelectedCategory={setSelectedCategory}
+        selectedCategory={selectedCategory}
         categories={categories}
         onPressCategorySelect={() => setShowCategoryModal(true)} // 👈 追加
         onAdd={(amount, memo, categoryId, cycleRule) => {
@@ -144,7 +121,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
         categories={categories}
         setCategories={setCategories}
         selectedCategoryId={categoryId}
-        onSelect={(id: string) => setCategoryId(id)}
+        onSelect={(category: Category) => setSelectedCategory(category)}
         onReorder={handleCategoryReorder}
         onDelete={handleCategoryDelete}
         onEditSave={handleCategoryEditOnSave}
