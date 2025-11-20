@@ -12,12 +12,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
-      "supportsTablet": true,
-      "icon": {
-        "dark": "./assets/images/ios-dark.png",
-        "light": "./assets/images/ios-light.png"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ouioui99.targetMoney",
+      "icon": "./assets/images/ios-dark.png",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserTrackingUsageDescription": "許可することで、より関連性の高い広告を表示することができるようになります。",
+        "LSApplicationQueriesSchemes": ["about"]
       }
     },
     "plugins": [
@@ -32,6 +34,15 @@
           },
           "imageWidth": 200
         }
+      ],
+      "expo-tracking-transparency",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3188429419506365~8838284632",
+          "iosAppId": "ca-app-pub-3188429419506365~4697527946",
+          "userTrackingUsageDescription": "許可することで、より関連性の高い広告を表示することができるようになります。"
+        }
       ]
     ],
     "android": {
@@ -40,10 +51,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["com.google.android.gms.permission.AD_ID"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e85ac583-b1f0-4b71-b2f4-da0ac6f9ad34"
+      }
     }
   }
 }
