@@ -21,7 +21,7 @@ export default function AppNavigator() {
   const c = colors[theme];
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
 
   useEffect(() => {
     (async () => {

@@ -9,6 +9,11 @@ import {
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import { RootStackParamList } from "../types/navigation";
+import PageInventory from "../components/onboarding/PageInventory";
+import PageRecipe from "../components/onboarding/PageRecipe";
+import PageWelcome from "../components/onboarding/PageWelcome";
+import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../theme/colors";
 
 const { width } = Dimensions.get("window");
 
@@ -32,6 +37,14 @@ type Props = NativeStackScreenProps<RootStackParamList, "Onboarding">;
 export default function OnboardingScreen({ navigation }: Props) {
   const pagerRef = useRef<PagerView>(null);
   const [page, setPage] = useState(0);
+  const { theme } = useTheme();
+  const c = colors[theme];
+
+  const pages = [
+    <PageWelcome key="p1" />,
+    <PageInventory key="p2" />,
+    <PageRecipe key="p3" />,
+  ];
 
   const handleNext = () => {
     if (page < pages.length - 1) {
@@ -42,33 +55,36 @@ export default function OnboardingScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, , { backgroundColor: c.card }]}>
       <PagerView
         ref={pagerRef}
-        style={styles.pager}
+        style={{ flex: 1 }}
         initialPage={0}
         onPageSelected={(e) => setPage(e.nativeEvent.position)}
       >
-        {pages.map((item, index) => (
-          <View style={styles.page} key={index}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
-          </View>
-        ))}
+        {pages.map((p) => p)}
       </PagerView>
 
-      {/* ページインジケーター */}
+      {/* インジケーター */}
       <View style={styles.indicatorContainer}>
         {pages.map((_, i) => (
           <View
             key={i}
-            style={[styles.indicator, page === i && styles.indicatorActive]}
+            style={[
+              styles.indicator,
+              page === i
+                ? [styles.indicatorActive, { backgroundColor: c.accent }]
+                : undefined,
+            ]}
           />
         ))}
       </View>
 
-      {/* 次へ / 開始ボタン */}
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
+      {/* 次へ / 開始する */}
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: c.accent }]}
+        onPress={handleNext}
+      >
         <Text style={styles.buttonText}>
           {page === pages.length - 1 ? "開始する" : "次へ"}
         </Text>
