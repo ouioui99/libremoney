@@ -56,6 +56,7 @@ type Props = {
   date: string;
   onClose: () => void;
   onChange: (selectedDate: string) => void;
+  minDate?: string;
 };
 
 export default function CalendarModal({
@@ -63,6 +64,7 @@ export default function CalendarModal({
   date,
   onClose,
   onChange,
+  minDate,
 }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -89,6 +91,7 @@ export default function CalendarModal({
               }}
             >
               <Calendar
+                minDate={minDate}
                 style={{ width: "100%" }}
                 current={date}
                 onDayPress={(day) => {
@@ -108,6 +111,7 @@ export default function CalendarModal({
                   todayTextColor: c.accent,
                   selectedDayBackgroundColor: c.accent,
                   selectedDayTextColor: c.background,
+                  textDisabledColor: c.disabled,
                 }}
               />
             </View>

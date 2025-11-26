@@ -10,10 +10,10 @@ import {
 import PagerView from "react-native-pager-view";
 import { RootStackParamList } from "../types/navigation";
 import PageInventory from "../components/onboarding/PageInventory";
-import PageRecipe from "../components/onboarding/PageRecipe";
 import PageWelcome from "../components/onboarding/PageWelcome";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
+import TargetSetting from "../components/onboarding/TargetSetting";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +51,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         <PageWelcome key="p1" />
 
         {/* ★ 入力が揃っているか親へ通知 */}
-        <PageRecipe key="p2" onValidityChange={setCanMoveNext} />
+        <TargetSetting key="p2" onValidityChange={setCanMoveNext} />
 
         <PageInventory key="p3" />
       </PagerView>

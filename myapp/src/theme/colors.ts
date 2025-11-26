@@ -17,6 +17,7 @@ export const colors = {
     error: "#E57373", // エラー表示
     warning: "#FF9800", // 警告表示
     info: "#26C6DA", // 情報表示
+    disabled: "#D6D6D6",
   },
   dark: {
     background: "#121212",
@@ -35,5 +36,6 @@ export const colors = {
     error: "#C75C5C",
     warning: "#FFA726",
     info: "#26C6DA",
+    disabled: "#555555",
   },
 };

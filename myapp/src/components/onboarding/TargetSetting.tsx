@@ -13,7 +13,7 @@ import {
 import { colors } from "../../theme/colors";
 import { useTheme } from "../../contexts/ThemeContext";
 import CalendarModal from "../CalenderModal";
-import { getTodayLocal } from "../../util/dateUtils";
+import { getTodayLocal, getTomorrowLocal } from "../../util/dateUtils";
 
 const { width } = Dimensions.get("window");
 
@@ -21,12 +21,13 @@ type PageRecipeProps = {
   onValidityChange: (isValid: boolean) => void;
 };
 
-export default function PageRecipe({ onValidityChange }: PageRecipeProps) {
+export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
   const { theme } = useTheme();
   const c = colors[theme];
+  const tomorrowDate = getTomorrowLocal();
 
   const [targetAmount, setTargetAmount] = useState("");
-  const [date, setDate] = useState(getTodayLocal());
+  const [date, setDate] = useState(tomorrowDate);
   const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export default function PageRecipe({ onValidityChange }: PageRecipeProps) {
           </View>
 
           <CalendarModal
+            minDate={tomorrowDate}
             visible={showPicker}
             date={date}
             onClose={() => setShowPicker(false)}
