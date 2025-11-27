@@ -40,13 +40,14 @@ export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ width: "100%", alignItems: "center" }}>
           <Text style={[styles.title, { color: c.text }]}>
-            まずは目標を設定しましょう
+            まずは目標を設定しよう
           </Text>
 
           <Text style={[styles.description, { color: c.text }]}>
             目標金額と期限を入力してください。{"\n"}
             あなたが毎日自由に使える金額が{"\n"}
-            わかるようになる第一歩です。
+            わかるようになる第一歩です。{"\n"}
+            後から設定を変更することも可能です。
           </Text>
 
           {/* 目標金額 */}
@@ -109,7 +110,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "bold",

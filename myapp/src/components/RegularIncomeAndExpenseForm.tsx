@@ -76,7 +76,14 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               placeholder="例: 250000"
               keyboardType="numeric"
               placeholderTextColor={c.placeholder}
-              style={[styles.input, { color: c.text, borderColor: c.border }]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: c.background,
+                  color: c.text,
+                  borderColor: c.border,
+                },
+              ]}
             />
 
             {/* メモ */}
@@ -88,7 +95,14 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               onChangeText={setMemo}
               placeholder="例: 基本給"
               placeholderTextColor={c.placeholder}
-              style={[styles.input, { color: c.text, borderColor: c.border }]}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: c.background,
+                  color: c.text,
+                  borderColor: c.border,
+                },
+              ]}
             />
 
             {/* カテゴリー選択 */}
@@ -99,7 +113,10 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               onPress={onPressCategorySelect}
               style={[
                 styles.categoryButton,
-                { backgroundColor: c.secondary, borderColor: c.border },
+                {
+                  backgroundColor: c.background,
+                  borderColor: c.border,
+                },
               ]}
             >
               <Text style={{ color: c.text }}>
@@ -110,7 +127,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
 
             {/* サイクルルール */}
             <TouchableOpacity
-              style={[styles.cycleButton, { backgroundColor: c.secondary }]}
+              style={[styles.cycleButton, { backgroundColor: c.accent }]}
               onPress={() => setShowCycleRuleSettingModal(true)}
             >
               <Ionicons name="repeat-outline" size={18} color={c.text} />
@@ -131,7 +148,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
                 styles.addButton,
                 {
                   backgroundColor:
-                    amount && cycleRuleType ? c.accent : c.border,
+                    amount && cycleRuleType ? c.accent : c.disabledOnCard,
                 },
               ]}
               disabled={!amount || !cycleRuleType}

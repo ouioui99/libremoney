@@ -18,6 +18,7 @@ export const colors = {
     warning: "#FF9800", // 警告表示
     info: "#26C6DA", // 情報表示
     disabled: "#D6D6D6",
+    disabledOnCard: "#B6C9C7",
   },
   dark: {
     background: "#121212",
@@ -37,5 +38,6 @@ export const colors = {
     warning: "#FFA726",
     info: "#26C6DA",
     disabled: "#555555",
+    disabledOnCard: "#3A4A49",
   },
 };

@@ -14,6 +14,7 @@ import PageWelcome from "../components/onboarding/PageWelcome";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import TargetSetting from "../components/onboarding/TargetSetting";
+import RegularExpenseSetting from "../components/onboarding/RegularExpenseSetting";
 
 const { width } = Dimensions.get("window");
 
@@ -32,7 +33,7 @@ export default function OnboardingScreen({ navigation }: Props) {
     // ▼ 2ページ目（index 1）で未入力なら進行禁止
     if (page === 1 && !canMoveNext) return;
 
-    if (page < 2) {
+    if (page < 3) {
       pagerRef.current?.setPage(page + 1);
     } else {
       navigation.replace("MainTabs");
@@ -53,12 +54,14 @@ export default function OnboardingScreen({ navigation }: Props) {
         {/* ★ 入力が揃っているか親へ通知 */}
         <TargetSetting key="p2" onValidityChange={setCanMoveNext} />
 
-        <PageInventory key="p3" />
+        <RegularExpenseSetting key="p3" />
+
+        <PageInventory key="p4" />
       </PagerView>
 
       {/* インジケーター */}
       <View style={styles.indicatorContainer}>
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2, 3].map((i) => (
           <View
             key={i}
             style={[
@@ -75,14 +78,16 @@ export default function OnboardingScreen({ navigation }: Props) {
       <TouchableOpacity
         style={[
           styles.button,
-          { backgroundColor: c.accent },
-          page === 1 && !canMoveNext && { opacity: 0.4 }, // ★ 未入力時は薄く
+          {
+            backgroundColor:
+              page === 1 && !canMoveNext ? c.disabledOnCard : c.accent,
+          },
         ]}
         disabled={page === 1 && !canMoveNext}
         onPress={handleNext}
       >
         <Text style={styles.buttonText}>
-          {page === 2 ? "開始する" : "次へ"}
+          {page === 3 ? "開始する" : "次へ"}
         </Text>
       </TouchableOpacity>
     </View>
