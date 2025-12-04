@@ -100,7 +100,7 @@ export const handleCategoryEditOnSave = async (
           ? STORAGE_KEYS.EXPENSE_CATEGORIES
           : STORAGE_KEYS.INCOME_CATEGORIES,
         (item) => item.id === id,
-        categories,
+        //categories,
         newCategory as unknown as Category
       );
 
