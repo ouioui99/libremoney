@@ -30,6 +30,7 @@ type Props = {
     cycleRule: CycleRule["type"]
   ) => void;
   onPressCategorySelect: () => void;
+  type: "expense" | "income";
 };
 
 const RegularIncomeAndExpenseForm: React.FC<Props> = ({
@@ -38,6 +39,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   categories,
   onAdd,
   onPressCategorySelect,
+  type,
 }) => {
   const { theme } = useTheme();
   const c = colors[theme];
@@ -93,7 +95,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
             <TextInput
               value={memo}
               onChangeText={setMemo}
-              placeholder="例: 基本給"
+              placeholder={type === "income" ? "例: 基本給" : "例: 家賃"}
               placeholderTextColor={c.placeholder}
               style={[
                 styles.input,

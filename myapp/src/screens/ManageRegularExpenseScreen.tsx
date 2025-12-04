@@ -104,6 +104,7 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
           const updated = [...expenses, newIncome];
           saveExpenses(updated);
         }}
+        type="expense"
       />
 
       {/* 支出一覧 */}

@@ -25,7 +25,7 @@ import SafeAreaLayout from "../SafeAreaLayout";
 
 const { width } = Dimensions.get("window");
 
-export default function RegularExpenseSetting({ navigation }: any) {
+export default function RegularIncomeSetting({ navigation }: any) {
   const { theme } = useTheme();
   const c = colors[theme];
 
@@ -47,13 +47,13 @@ export default function RegularExpenseSetting({ navigation }: any) {
     loadCategories();
   }, []);
 
-  /** 定期支出の読み込み */
+  /** 定期収入の読み込み */
   const loadExpenses = async () => {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.REGULARLY_EXPENSES);
       if (data) setExpenses(JSON.parse(data));
     } catch (error) {
-      console.error("支出データの読み込みに失敗:", error);
+      console.error("収入データの読み込みに失敗:", error);
     }
   };
 
@@ -67,7 +67,7 @@ export default function RegularExpenseSetting({ navigation }: any) {
     }
   };
 
-  /** 定期支出の保存 */
+  /** 定期収入の保存 */
   const saveExpenses = async (list: RegularIncome[]) => {
     setExpenses(list);
     await AsyncStorage.setItem(
@@ -78,7 +78,7 @@ export default function RegularExpenseSetting({ navigation }: any) {
 
   /** 削除処理 */
   const handleDelete = (id: string) => {
-    Alert.alert("削除確認", "この支出を削除しますか？", [
+    Alert.alert("削除確認", "この収入を削除しますか？", [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
@@ -95,11 +95,11 @@ export default function RegularExpenseSetting({ navigation }: any) {
     <SafeAreaLayout style={[styles.container, { backgroundColor: c.card }]}>
       <View style={{ width: "100%", alignItems: "center" }}>
         <Text style={[styles.title, { color: c.text }]}>
-          定期的な支出を設定しよう
+          定期的な収入を設定しよう
         </Text>
 
         <Text style={[styles.description, { color: c.text }]}>
-          定期的な支出を入力してください。{"\n"}
+          定期的な収入を入力してください。{"\n"}
           後から設定することも可能です。{"\n"}
         </Text>
       </View>
@@ -121,7 +121,7 @@ export default function RegularExpenseSetting({ navigation }: any) {
           const updated = [...expenses, newItem];
           saveExpenses(updated);
         }}
-        type="expense"
+        type="income"
       />
 
       {/* ------- 一覧表示 ---------- */}
@@ -131,7 +131,7 @@ export default function RegularExpenseSetting({ navigation }: any) {
         theme={theme}
         colors={c}
         onDelete={handleDelete}
-        type="支出"
+        type="収入"
       /> */}
 
       {/* ------- カテゴリー管理 ---------- */}
@@ -147,7 +147,7 @@ export default function RegularExpenseSetting({ navigation }: any) {
         setShowCategoryModal={setShowCategoryModal}
         showCategoryListModal={showCategoryListModal}
         setShowCategoryListModal={setShowCategoryListModal}
-        type="expense"
+        type="income"
       />
 
       {/* ------- サイクルルール設定 ---------- */}

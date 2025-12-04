@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import PagerView from "react-native-pager-view";
 import { RootStackParamList } from "../types/navigation";
-import PageInventory from "../components/onboarding/PageInventory";
+import RegularIncomeSetting from "../components/onboarding/RegularIncomeSetting";
 import PageWelcome from "../components/onboarding/PageWelcome";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
@@ -56,7 +56,7 @@ export default function OnboardingScreen({ navigation }: Props) {
 
         <RegularExpenseSetting key="p3" />
 
-        <PageInventory key="p4" />
+        <RegularIncomeSetting key="p4" />
       </PagerView>
 
       {/* インジケーター */}

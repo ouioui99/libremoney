@@ -104,6 +104,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           const updated = [...incomes, newIncome];
           saveIncomes(updated);
         }}
+        type="income"
       />
 
       {/* 支出一覧 */}
