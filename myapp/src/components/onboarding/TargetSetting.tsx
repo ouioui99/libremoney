@@ -1,4 +1,3 @@
-// components/onboarding/PageRecipe.tsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -9,19 +8,36 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from "react-native";
 import { colors } from "../../theme/colors";
 import { useTheme } from "../../contexts/ThemeContext";
 import CalendarModal from "../CalenderModal";
 import { getTodayLocal, getTomorrowLocal } from "../../util/dateUtils";
+import { STORAGE_KEYS } from "../../util/constants";
+import { addItemToStorage, getItemsFromStorage } from "../../util/storageUtils";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SavingsGoal } from "../../types/models";
 
 const { width } = Dimensions.get("window");
 
-type PageRecipeProps = {
+type TargetSettingProps = {
   onValidityChange: (isValid: boolean) => void;
+  edditFinish: boolean;
+  setEdditFinish: React.Dispatch<React.SetStateAction<boolean>>;
+  onComplete: () => void;
+  submitting: boolean;
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
+export default function TargetSetting({
+  onValidityChange,
+  edditFinish,
+  setEdditFinish,
+  onComplete,
+  submitting,
+  setSubmitting,
+}: TargetSettingProps) {
   const { theme } = useTheme();
   const c = colors[theme];
   const tomorrowDate = getTomorrowLocal();
@@ -29,11 +45,88 @@ export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
   const [targetAmount, setTargetAmount] = useState("");
   const [date, setDate] = useState(tomorrowDate);
   const [showPicker, setShowPicker] = useState(false);
+  const [showError, setShowError] = useState(false);
+
+  const isValid = targetAmount.trim() !== "" && date.trim() !== "";
+
+  const handleSave = async () => {
+    if (!targetAmount || !date) return;
+
+    const savingGoal = {
+      amount: targetAmount,
+      deadline: date,
+      createdAt: getTodayLocal(),
+    };
+
+    const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
+      STORAGE_KEYS.SAVING_GOAL
+    );
+
+    if (storedSavingGoal.length > 0) {
+      Alert.alert(
+        "目標を上書きしますか？",
+        "現在設定されている目標は削除され、新しい目標が保存されます。",
+        [
+          { text: "キャンセル", style: "cancel" },
+          {
+            text: "上書きする",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await AsyncStorage.setItem(
+                  STORAGE_KEYS.SAVING_GOAL,
+                  JSON.stringify([])
+                );
+                await addItemToStorage(
+                  STORAGE_KEYS.SAVING_GOAL,
+                  [],
+                  savingGoal
+                );
+              } catch (e) {
+                console.error("保存処理エラー:", e);
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    addItemToStorage(STORAGE_KEYS.SAVING_GOAL, [], savingGoal);
+  };
+
+  const validateFields = (isValid: boolean) => {
+    onValidityChange(isValid);
+    setShowError(!isValid);
+    setSubmitting(false);
+  };
 
   useEffect(() => {
-    const isValid = targetAmount.trim() !== "" && date.trim() !== "";
-    onValidityChange(isValid);
-  }, [targetAmount, date]);
+    if (submitting) {
+      validateFields(isValid);
+      if (!isValid) return;
+
+      // OK → onComplete()
+      Alert.alert(
+        "確認",
+        `目標金額：${targetAmount}\n達成日：${date}\nこの内容で設定しますか？`,
+        [
+          {
+            text: "キャンセル",
+            style: "cancel",
+            onPress: () => setSubmitting(false),
+          },
+          {
+            text: "OK",
+            onPress: () => {
+              handleSave();
+              onComplete();
+            },
+          },
+        ]
+      );
+    }
+  }, [submitting]);
 
   return (
     <View style={[styles.page, { backgroundColor: c.card }]}>
@@ -59,7 +152,8 @@ export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
                 {
                   backgroundColor: c.background,
                   color: c.text,
-                  borderColor: c.border,
+                  borderColor:
+                    showError && targetAmount.trim() === "" ? "red" : c.border,
                 },
               ]}
               value={targetAmount}
@@ -68,6 +162,10 @@ export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
               placeholderTextColor={c.text + "66"}
               keyboardType="numeric"
             />
+            {/* ★ エラーメッセージ */}
+            {showError && targetAmount.trim() === "" && (
+              <Text style={[styles.errorText]}>目標金額を入力してください</Text>
+            )}
           </View>
 
           {/* 達成日 */}
@@ -77,13 +175,22 @@ export default function TargetSetting({ onValidityChange }: PageRecipeProps) {
               onPress={() => setShowPicker(true)}
               style={[
                 styles.dateButton,
-                { backgroundColor: c.background, borderColor: c.border },
+                {
+                  backgroundColor: c.background,
+                  borderColor:
+                    showError && date.trim() === "" ? "red" : c.border,
+                },
               ]}
             >
               <Text style={[styles.dateButtonText, { color: c.text }]}>
                 {date}
               </Text>
             </TouchableOpacity>
+
+            {/* ★ エラーメッセージ */}
+            {showError && date.trim() === "" && (
+              <Text style={[styles.errorText]}>達成日を選択してください</Text>
+            )}
           </View>
 
           <CalendarModal
@@ -116,7 +223,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
   },
-
   description: {
     fontSize: 18,
     textAlign: "center",
@@ -124,19 +230,16 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     marginBottom: 32,
   },
-
   inputWrapper: {
     width: "100%",
     maxWidth: 340,
     marginBottom: 24,
   },
-
   label: {
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 8,
   },
-
   input: {
     width: "100%",
     borderWidth: 1,
@@ -145,7 +248,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 18,
   },
-
   dateButton: {
     width: "100%",
     borderWidth: 1,
@@ -153,8 +255,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
-
   dateButtonText: {
     fontSize: 18,
+  },
+  errorText: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "red",
   },
 });

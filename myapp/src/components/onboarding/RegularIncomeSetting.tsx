@@ -50,7 +50,7 @@ export default function RegularIncomeSetting({ navigation }: any) {
   /** 定期収入の読み込み */
   const loadExpenses = async () => {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.REGULARLY_EXPENSES);
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.REGULARLY_INCOMES);
       if (data) setExpenses(JSON.parse(data));
     } catch (error) {
       console.error("収入データの読み込みに失敗:", error);
@@ -60,7 +60,7 @@ export default function RegularIncomeSetting({ navigation }: any) {
   /** カテゴリーの読み込み */
   const loadCategories = async () => {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.EXPENSE_CATEGORIES);
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.INCOME_CATEGORIES);
       if (data) setCategories(JSON.parse(data));
     } catch (error) {
       console.error("カテゴリーの読み込みに失敗:", error);
@@ -71,7 +71,7 @@ export default function RegularIncomeSetting({ navigation }: any) {
   const saveExpenses = async (list: RegularIncome[]) => {
     setExpenses(list);
     await AsyncStorage.setItem(
-      STORAGE_KEYS.REGULARLY_EXPENSES,
+      STORAGE_KEYS.REGULARLY_INCOMES,
       JSON.stringify(list)
     );
   };

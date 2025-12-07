@@ -1,3 +1,5 @@
+//TODO バリデーション関係はTargetSettingで完結させるように修正する
+
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useRef, useState } from "react";
 import {
@@ -26,14 +28,16 @@ export default function OnboardingScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const c = colors[theme];
 
-  // ★ PageRecipe の入力が揃っているか（true なら進める）
   const [canMoveNext, setCanMoveNext] = useState(false);
 
-  const handleNext = () => {
-    // ▼ 2ページ目（index 1）で未入力なら進行禁止
-    if (page === 1 && !canMoveNext) return;
+  const [showFieldError, setShowFieldError] = useState(false);
+  const [edditFinish, setEdditFinish] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-    if (page < 3) {
+  const handleNext = () => {
+    if (page === 1) {
+      setSubmitting(true);
+    } else if (page !== 1 && page < 3) {
       pagerRef.current?.setPage(page + 1);
     } else {
       navigation.replace("MainTabs");
@@ -46,16 +50,29 @@ export default function OnboardingScreen({ navigation }: Props) {
         ref={pagerRef}
         style={styles.pager}
         initialPage={0}
-        scrollEnabled={page === 1 ? canMoveNext : true} // ★ スワイプも制御
+        scrollEnabled={page === 1 ? canMoveNext : true}
         onPageSelected={(e) => setPage(e.nativeEvent.position)}
       >
         <PageWelcome key="p1" />
 
-        {/* ★ 入力が揃っているか親へ通知 */}
-        <TargetSetting key="p2" onValidityChange={setCanMoveNext} />
+        {/* ★ エラー状態を子へ渡す */}
+        <TargetSetting
+          key="p2"
+          edditFinish={edditFinish}
+          setEdditFinish={setEdditFinish}
+          onValidityChange={(isValid) => {
+            setCanMoveNext(isValid);
+            if (isValid) setShowFieldError(false);
+          }}
+          onComplete={() => {
+            // Confirm → OK のときだけ呼ばれる
+            pagerRef.current?.setPage(page + 1);
+          }}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+        />
 
         <RegularExpenseSetting key="p3" />
-
         <RegularIncomeSetting key="p4" />
       </PagerView>
 
@@ -79,15 +96,15 @@ export default function OnboardingScreen({ navigation }: Props) {
         style={[
           styles.button,
           {
-            backgroundColor:
-              page === 1 && !canMoveNext ? c.disabledOnCard : c.accent,
+            backgroundColor: c.accent,
           },
         ]}
-        disabled={page === 1 && !canMoveNext}
-        onPress={handleNext}
+        onPress={() => {
+          handleNext();
+        }}
       >
         <Text style={styles.buttonText}>
-          {page === 3 ? "開始する" : "次へ"}
+          {page === 1 ? "設定する" : page === 3 ? "開始する" : "次へ"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -101,16 +118,10 @@ const styles = StyleSheet.create({
   pager: {
     flex: 1,
   },
-  page: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: width,
-    paddingHorizontal: 24,
-  },
   indicatorContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   indicator: {
     width: 8,
@@ -134,5 +145,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 18,
+  },
+  errorText: {
+    textAlign: "center",
+    marginBottom: 14,
+    fontSize: 14,
   },
 });
