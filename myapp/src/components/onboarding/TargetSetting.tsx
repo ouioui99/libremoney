@@ -49,50 +49,64 @@ export default function TargetSetting({
 
   const isValid = targetAmount.trim() !== "" && date.trim() !== "";
 
-  const handleSave = async () => {
-    if (!targetAmount || !date) return;
+  const handleSave = async (): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      if (!targetAmount || !date) {
+        resolve();
+        return;
+      }
 
-    const savingGoal = {
-      amount: targetAmount,
-      deadline: date,
-      createdAt: getTodayLocal(),
-    };
+      const savingGoal = {
+        amount: targetAmount,
+        deadline: date,
+        createdAt: getTodayLocal(),
+      };
 
-    const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-      STORAGE_KEYS.SAVING_GOAL
-    );
-
-    if (storedSavingGoal.length > 0) {
-      Alert.alert(
-        "目標を上書きしますか？",
-        "現在設定されている目標は削除され、新しい目標が保存されます。",
-        [
-          { text: "キャンセル", style: "cancel" },
-          {
-            text: "上書きする",
-            style: "destructive",
-            onPress: async () => {
-              try {
-                await AsyncStorage.setItem(
-                  STORAGE_KEYS.SAVING_GOAL,
-                  JSON.stringify([])
-                );
-                await addItemToStorage(
-                  STORAGE_KEYS.SAVING_GOAL,
-                  [],
-                  savingGoal
-                );
-              } catch (e) {
-                console.error("保存処理エラー:", e);
-              }
-            },
-          },
-        ]
+      const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
+        STORAGE_KEYS.SAVING_GOAL
       );
-      return;
-    }
 
-    addItemToStorage(STORAGE_KEYS.SAVING_GOAL, [], savingGoal);
+      // 既に目標設定がある → 上書き確認
+      if (storedSavingGoal.length > 0) {
+        Alert.alert(
+          "目標を上書きしますか？",
+          "現在設定されている目標は削除され、新しい目標が保存されます。",
+          [
+            { text: "キャンセル", style: "cancel", onPress: () => resolve() },
+            {
+              text: "上書きする",
+              style: "destructive",
+              onPress: async () => {
+                try {
+                  await AsyncStorage.setItem(
+                    STORAGE_KEYS.SAVING_GOAL,
+                    JSON.stringify([])
+                  );
+                  await addItemToStorage(
+                    STORAGE_KEYS.SAVING_GOAL,
+                    [],
+                    savingGoal
+                  );
+                  resolve(); // ← 完了を通知
+                } catch (e) {
+                  console.error("保存処理エラー:", e);
+                  reject(e);
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      // 目標がまだない → 普通に保存して resolve
+      try {
+        await addItemToStorage(STORAGE_KEYS.SAVING_GOAL, [], savingGoal);
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
   };
 
   const validateFields = (isValid: boolean) => {
@@ -118,8 +132,8 @@ export default function TargetSetting({
           },
           {
             text: "OK",
-            onPress: () => {
-              handleSave();
+            onPress: async () => {
+              await handleSave();
               onComplete();
             },
           },
