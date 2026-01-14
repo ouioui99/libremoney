@@ -1,6 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Category, NewCategoryInput } from "../types/models";
-import { STORAGE_KEYS } from "./constants";
+import {
+  DEFAULT_EXPENSE_CATEGORIES,
+  DEFAULT_INCOME_CATEGORIES,
+  STORAGE_KEYS,
+} from "./constants";
 import { Alert } from "react-native";
 import {
   addItemToStorage,
@@ -135,5 +139,45 @@ export const handleCategoryEditOnSave = async (
     );
 
     setCategories(newCategories);
+  }
+};
+
+const buildCategories = (
+  defaults: { name: string; icon: any }[],
+  type: "expense" | "income"
+): Category[] => {
+  return defaults.map((item, index) => ({
+    id: String(index + 1),
+    name: item.name,
+    icon: item.icon,
+    order: String(index + 1),
+    type,
+  }));
+};
+
+export const initializeCategoriesIfFirstLaunch = async () => {
+  try {
+    const expenseCategories = buildCategories(
+      DEFAULT_EXPENSE_CATEGORIES,
+      "expense"
+    );
+    const incomeCategories = buildCategories(
+      DEFAULT_INCOME_CATEGORIES,
+      "income"
+    );
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.EXPENSE_CATEGORIES,
+      JSON.stringify(expenseCategories)
+    );
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.INCOME_CATEGORIES,
+      JSON.stringify(incomeCategories)
+    );
+
+    await AsyncStorage.setItem("categoriesInitialized", "true");
+  } catch (e) {
+    console.error("初期カテゴリー作成エラー:", e);
   }
 };

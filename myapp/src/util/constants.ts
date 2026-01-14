@@ -28,6 +28,13 @@ export const DEFAULT_EXPENSE_CATEGORIES: Category[] = [
   { id: "6", name: "その他", icon: "ellipsis-horizontal-outline", order: "6" },
 ];
 
+export const DEFAULT_INCOME_CATEGORIES: Category[] = [
+  { id: "1", name: "給与", icon: "cash-outline", order: "1" },
+  { id: "2", name: "賞与", icon: "gift-outline", order: "2" },
+  { id: "3", name: "副業", icon: "briefcase-outline", order: "3" },
+  { id: "4", name: "その他", icon: "ellipsis-horizontal-outline", order: "4" },
+];
+
 export const CALC_BUTTONS = [
   ["⌫", "AC", "%", "÷"],
   ["7", "8", "9", "×"],

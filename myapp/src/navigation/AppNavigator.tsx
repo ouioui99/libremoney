@@ -13,6 +13,7 @@ import OnboardingScreen from "../screens/OnboardingScreen"; // ← 追加
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import { RootStackParamList } from "../types/navigation";
+import { initializeCategoriesIfFirstLaunch } from "../util/categoryUtils";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -28,9 +29,15 @@ export default function AppNavigator() {
       try {
         const launched = await AsyncStorage.getItem("isFirstLaunch");
 
-        if (!launched) {
+        if (launched === null) {
+          // 初回起動
           setIsFirstLaunch(true);
+          initializeCategoriesIfFirstLaunch();
           await AsyncStorage.setItem("isFirstLaunch", "true");
+        } else {
+          // 2回目以降
+          //TODO:開発用
+          //setIsFirstLaunch(false);
         }
       } catch (error) {
         console.log("Launch check error:", error);
