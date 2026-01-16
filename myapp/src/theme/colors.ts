@@ -19,6 +19,7 @@ export const colors = {
     info: "#26C6DA", // 情報表示
     disabled: "#D6D6D6",
     disabledOnCard: "#B6C9C7",
+    subText: "#6FA3A0",
   },
   dark: {
     background: "#121212",
@@ -39,5 +40,6 @@ export const colors = {
     info: "#26C6DA",
     disabled: "#555555",
     disabledOnCard: "#3A4A49",
+    subText: "#8FB8B6",
   },
 };

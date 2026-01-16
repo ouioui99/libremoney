@@ -10,13 +10,22 @@ const { width } = Dimensions.get("window");
 export default function PageWelcome() {
   const { theme } = useTheme();
   const c = colors[theme];
+
   return (
     <View style={[styles.page, { backgroundColor: c.card }]}>
       <Text style={[styles.title, { color: c.text }]}>ようこそ！</Text>
 
       <Text style={[styles.description, { color: c.text }]}>
         目標貯金額と期限を設定するだけで、 毎日使えるお金がすぐにわかります。
-        無理な節約は不要。自由に使いながら自然に貯金できます。
+      </Text>
+
+      <Text style={[styles.description, { color: c.text }]}>
+        無理な節約は不要。 自由に使いながら自然に貯金できます。
+      </Text>
+
+      <Text style={[styles.privacyNote, { color: c.subText }]}>
+        ※ データはすべて端末内にのみ保存されるため、
+        機内モードでも使用可能です。
       </Text>
     </View>
   );
@@ -31,15 +40,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   title: {
-    fontSize: 32, // ← 少し大きくして印象アップ
+    fontSize: 32,
     fontWeight: "bold",
-    marginBottom: 24, // ← タイトルと説明の余白を広げる
+    marginBottom: 32, // タイトルと本文の余白を少し広げる
   },
   description: {
-    fontSize: 18, // ← 読みやすい大きさ
+    fontSize: 18,
     textAlign: "center",
-    color: "#333", // ← 少し濃い色で視認性向上
-    lineHeight: 28, // ← 行間をゆったり
-    maxWidth: 320, // ← 横幅を読みやすい幅に制限
+    lineHeight: 30, // ← 行間を広めに
+    maxWidth: 320,
+    marginBottom: 12, // ← 段落間の余白
+  },
+  privacyNote: {
+    marginTop: 24, // 本文との距離
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 22, // 注釈は詰めすぎない
   },
 });
