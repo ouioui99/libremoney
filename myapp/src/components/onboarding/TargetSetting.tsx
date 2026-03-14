@@ -47,7 +47,10 @@ export default function TargetSetting({
   const [showPicker, setShowPicker] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const isValid = targetAmount.trim() !== "" && date.trim() !== "";
+  const isValid =
+    !isNaN(Number(targetAmount)) &&
+    targetAmount.trim() !== "" &&
+    date.trim() !== "";
 
   const handleSave = async (): Promise<void> => {
     return new Promise(async (resolve, reject) => {
@@ -63,7 +66,7 @@ export default function TargetSetting({
       };
 
       const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-        STORAGE_KEYS.SAVING_GOAL
+        STORAGE_KEYS.SAVING_GOAL,
       );
 
       // 既に目標設定がある → 上書き確認
@@ -80,12 +83,12 @@ export default function TargetSetting({
                 try {
                   await AsyncStorage.setItem(
                     STORAGE_KEYS.SAVING_GOAL,
-                    JSON.stringify([])
+                    JSON.stringify([]),
                   );
                   await addItemToStorage(
                     STORAGE_KEYS.SAVING_GOAL,
                     [],
-                    savingGoal
+                    savingGoal,
                   );
                   resolve(); // ← 完了を通知
                 } catch (e) {
@@ -94,7 +97,7 @@ export default function TargetSetting({
                 }
               },
             },
-          ]
+          ],
         );
         return;
       }
@@ -118,6 +121,9 @@ export default function TargetSetting({
   useEffect(() => {
     if (submitting) {
       validateFields(isValid);
+      console.log("submitting");
+      console.log(isValid);
+
       if (!isValid) return;
 
       // OK → onComplete()
@@ -137,7 +143,7 @@ export default function TargetSetting({
               onComplete();
             },
           },
-        ]
+        ],
       );
     }
   }, [submitting]);
@@ -180,6 +186,13 @@ export default function TargetSetting({
             {showError && targetAmount.trim() === "" && (
               <Text style={[styles.errorText]}>目標金額を入力してください</Text>
             )}
+            {showError &&
+              targetAmount.trim() !== "" &&
+              isNaN(Number(targetAmount)) && (
+                <Text style={[styles.errorText]}>
+                  目標金額は数字で入力してください
+                </Text>
+              )}
           </View>
 
           {/* 達成日 */}

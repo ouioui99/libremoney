@@ -1,5 +1,5 @@
 // navigation/AppNavigator.tsx
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,6 +15,8 @@ import { colors } from "../theme/colors";
 import { RootStackParamList } from "../types/navigation";
 import { initializeCategoriesIfFirstLaunch } from "../util/categoryUtils";
 
+import mobileAds from "react-native-google-mobile-ads";
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
@@ -23,6 +25,21 @@ export default function AppNavigator() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstLaunch, setIsFirstLaunch] = useState(true);
+
+  // const initAd = useCallback(async () => {
+  //   try {
+  //     // ここで初期化する
+  //     await mobileAds().initialize();
+  //   } catch (err) {
+  //     console.warn("initAd", err);
+  //   }
+  // }, []);
+
+  // // 初期データの取得
+  // useEffect(() => {
+  //   initAd();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   useEffect(() => {
     (async () => {
