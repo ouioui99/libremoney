@@ -32,15 +32,22 @@ export default function SavingsGoalScreen({ navigation }: any) {
   const [isEdit, setIsEdit] = useState(false);
   const [originalGoal, setOriginalGoal] = useState<SavingsGoal | null>(null);
   const [hasChanged, setHasChanged] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   const today = new Date(getTodayLocal());
+
+  const isValid =
+    !isNaN(Number(amount)) &&
+    amount.trim() !== "" &&
+    deadline !== null &&
+    1 < Number(amount);
 
   // 🔹 初回読み込み（既存データがある場合は編集モードに）
   useEffect(() => {
     (async () => {
       try {
         const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-          STORAGE_KEYS.SAVING_GOAL
+          STORAGE_KEYS.SAVING_GOAL,
         );
 
         if (storedSavingGoal.length > 0) {
@@ -63,6 +70,8 @@ export default function SavingsGoalScreen({ navigation }: any) {
       return;
     }
 
+    setShowError(!isValid);
+
     const originalAmount = String(originalGoal.amount);
     const originalDeadline = new Date(originalGoal.deadline)
       .toISOString()
@@ -72,7 +81,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
       : "";
 
     setHasChanged(
-      amount !== originalAmount || currentDeadline !== originalDeadline
+      amount !== originalAmount || currentDeadline !== originalDeadline,
     );
   }, [amount, deadline, isEdit, originalGoal]);
 
@@ -84,7 +93,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
 
   // 🔹 保存処理
   const handleSave = () => {
-    if (!amount || !deadline) return;
+    if (!isValid) return;
 
     const savingGoal = {
       amount,
@@ -105,12 +114,12 @@ export default function SavingsGoalScreen({ navigation }: any) {
               try {
                 await AsyncStorage.setItem(
                   STORAGE_KEYS.SAVING_GOAL,
-                  JSON.stringify([])
+                  JSON.stringify([]),
                 );
                 await addItemToStorage(
                   STORAGE_KEYS.SAVING_GOAL,
                   [],
-                  savingGoal
+                  savingGoal,
                 );
                 navigation.goBack();
               } catch (e) {
@@ -118,7 +127,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
               }
             },
           },
-        ]
+        ],
       );
       return;
     }
@@ -188,8 +197,25 @@ export default function SavingsGoalScreen({ navigation }: any) {
                   value={amount}
                   onChangeText={setAmount}
                 />
+
                 <Text style={[styles.unit, { color: c.placeholder }]}>円</Text>
               </View>
+              {/* ★ エラーメッセージ */}
+              {showError && amount.trim() === "" && (
+                <Text style={[styles.errorText]}>
+                  目標金額を入力してください
+                </Text>
+              )}
+              {showError && amount.trim() !== "" && isNaN(Number(amount)) && (
+                <Text style={[styles.errorText]}>
+                  目標金額は数字で入力してください
+                </Text>
+              )}
+              {showError && amount.trim() !== "" && Number(amount) < 1 && (
+                <Text style={[styles.errorText]}>
+                  目標金額は1以上の数字で入力してください
+                </Text>
+              )}
 
               {/* 期限 */}
               <Text style={[styles.label, { color: c.text, marginTop: 20 }]}>
@@ -324,5 +350,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 17,
     fontWeight: "700",
+  },
+  errorText: {
+    marginTop: 6,
+    fontSize: 14,
+    marginLeft: 30,
+    color: "red",
   },
 });

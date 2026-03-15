@@ -121,8 +121,6 @@ export default function TargetSetting({
   useEffect(() => {
     if (submitting) {
       validateFields(isValid);
-      console.log("submitting");
-      console.log(isValid);
 
       if (!isValid) return;
 

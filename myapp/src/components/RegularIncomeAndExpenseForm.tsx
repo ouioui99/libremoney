@@ -27,7 +27,7 @@ type Props = {
     memo: string,
     categoryId: string,
 
-    cycleRule: CycleRule["type"]
+    cycleRule: CycleRule["type"],
   ) => void;
   onPressCategorySelect: () => void;
   type: "expense" | "income";
@@ -52,6 +52,8 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
 
   const handleSubmit = () => {
     if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
+    if (isNaN(Number(amount)))
+      return Alert.alert("入力エラー", "金額には数字を入力してください。");
     if (!cycleRuleType)
       return Alert.alert("入力エラー", "サイクルルールを設定してください");
     if (!selectedCategory)
@@ -137,10 +139,10 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
                 {typeof cycleRuleType === "undefined"
                   ? "サイクルルールを設定"
                   : cycleRuleType === "weekly"
-                  ? "週1（毎週）"
-                  : cycleRuleType === "monthly"
-                  ? "月1（毎月）"
-                  : "年1（毎年）"}
+                    ? "週1（毎週）"
+                    : cycleRuleType === "monthly"
+                      ? "月1（毎月）"
+                      : "年1（毎年）"}
               </Text>
             </TouchableOpacity>
 

@@ -85,18 +85,18 @@ export default function EditExpenseModal({
     (async () => {
       try {
         const storedCategories = await getItemsFromStorage<Category>(
-          CATEGORY_STORAGE_KEYS
+          CATEGORY_STORAGE_KEYS,
         );
         setCategories(storedCategories);
 
         const storedExpenses = await getItemsFromStorage<Expense>(
-          EXPENSE_INCOME_STORAGE_KEYS
+          EXPENSE_INCOME_STORAGE_KEYS,
         );
 
         setSelectedCategory(
           storedCategories.find(
-            (category) => category.id === expense?.categoryId
-          )
+            (category) => category.id === expense?.categoryId,
+          ),
         );
 
         setExpenses(storedExpenses);
@@ -109,6 +109,10 @@ export default function EditExpenseModal({
   const handleSave = async () => {
     if (!amount || isNaN(Number(amount))) {
       Alert.alert("エラー", "正しい金額を入力してください");
+      return;
+    }
+    if (Number(amount) < 1) {
+      Alert.alert("エラー", "金額は1以上の数字で入力してください");
       return;
     }
     if (!selectedCategory) {
@@ -129,7 +133,7 @@ export default function EditExpenseModal({
       await editItemInStorage<Expense>(
         EXPENSE_INCOME_STORAGE_KEYS,
         (item) => item.id === expense.id,
-        updatedExpense
+        updatedExpense,
       );
       onSave(updatedExpense);
       onClose();
@@ -152,7 +156,7 @@ export default function EditExpenseModal({
             // removeItemFromStorage を使用して削除
             const updatedExpenses = await removeItemFromStorage<Expense>(
               EXPENSE_INCOME_STORAGE_KEYS,
-              (item) => item.id === expense.id
+              (item) => item.id === expense.id,
             );
 
             setExpenses(updatedExpenses); // モーダル内 state 更新

@@ -93,10 +93,10 @@ export default function ExpenseScreen() {
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardDidShow", () =>
-      setKeyboardVisible(true)
+      setKeyboardVisible(true),
     );
     const hideSub = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardVisible(false)
+      setKeyboardVisible(false),
     );
 
     return () => {
@@ -110,16 +110,16 @@ export default function ExpenseScreen() {
     (async () => {
       try {
         const storedExpenses = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.EXPENSES
+          STORAGE_KEYS.EXPENSES,
         );
         setExpenses(storedExpenses);
 
         const storedExpenseCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.EXPENSE_CATEGORIES
+          STORAGE_KEYS.EXPENSE_CATEGORIES,
         );
 
         const storeIncomeCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.INCOME_CATEGORIES
+          STORAGE_KEYS.INCOME_CATEGORIES,
         );
 
         // order プロパティでソート
@@ -257,8 +257,14 @@ export default function ExpenseScreen() {
         Alert.alert("エラー", "正しい金額を入力してください");
         return;
       }
+
       if (!selectedCategory) {
         Alert.alert("エラー", "カテゴリーを選択してください");
+        return;
+      }
+
+      if (amount < 1) {
+        Alert.alert("エラー", "金額は1以上の数字で入力してください");
         return;
       }
 
@@ -275,7 +281,7 @@ export default function ExpenseScreen() {
 
       Alert.alert(
         "保存完了",
-        `${isIncomeMode ? "収入" : "支出"}を保存しました`
+        `${isIncomeMode ? "収入" : "支出"}を保存しました`,
       );
 
       setExpression("");
@@ -484,8 +490,8 @@ export default function ExpenseScreen() {
                           displayBtn === displayConfirmBtn
                             ? c.operator
                             : ["÷", "×", "−", "+", "="].includes(btn)
-                            ? c.accent
-                            : c.secondary,
+                              ? c.accent
+                              : c.secondary,
                         justifyContent: "center",
                         alignItems: "center",
                       }}

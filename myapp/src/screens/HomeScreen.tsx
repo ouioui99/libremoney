@@ -53,11 +53,12 @@ export default function HomeScreen() {
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category>();
   const [displaiedCategories, setDisplaiedCategories] = useState<Category[]>(
-    []
+    [],
   );
   const [categoryId, setCategoryId] = useState<string>("");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   const [calculatedTodayUsableAmount, setCalculatedTodayUsableAmount] =
     useState(0);
@@ -82,22 +83,22 @@ export default function HomeScreen() {
     (async () => {
       try {
         const storedExpenses = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.EXPENSES
+          STORAGE_KEYS.EXPENSES,
         );
 
         const storedIncomes = await getItemsFromStorage<Expense>(
-          STORAGE_KEYS.INCOMES
+          STORAGE_KEYS.INCOMES,
         );
 
         setExpenses(storedExpenses);
         setIncomes(storedIncomes);
 
         const storedExpenseCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.EXPENSE_CATEGORIES
+          STORAGE_KEYS.EXPENSE_CATEGORIES,
         );
 
         const storeIncomeCategories = await getItemsFromStorage<Category>(
-          STORAGE_KEYS.INCOME_CATEGORIES
+          STORAGE_KEYS.INCOME_CATEGORIES,
         );
 
         // order プロパティでソート
@@ -139,19 +140,19 @@ export default function HomeScreen() {
   const fetchAndCalculate = async () => {
     try {
       const storedExpenses = await getItemsFromStorage<Expense>(
-        STORAGE_KEYS.EXPENSES
+        STORAGE_KEYS.EXPENSES,
       );
       const storedIncomes = await getItemsFromStorage<Expense>(
-        STORAGE_KEYS.INCOMES
+        STORAGE_KEYS.INCOMES,
       );
       const storedSavingGoal = await getItemsFromStorage<SavingsGoal>(
-        STORAGE_KEYS.SAVING_GOAL
+        STORAGE_KEYS.SAVING_GOAL,
       );
       const storedRegularyIncomes = await getItemsFromStorage<RegularIncome>(
-        STORAGE_KEYS.REGULARLY_INCOMES
+        STORAGE_KEYS.REGULARLY_INCOMES,
       );
       const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
-        STORAGE_KEYS.REGULARLY_EXPENSES
+        STORAGE_KEYS.REGULARLY_EXPENSES,
       );
 
       if (storedSavingGoal.length > 0) {
@@ -159,13 +160,13 @@ export default function HomeScreen() {
         setSavingGoal(savingGoal);
 
         const calculatedRemainingDays = calculateRemainingDays(
-          savingGoal.deadline
+          savingGoal.deadline,
         );
         setRemainingDays(calculatedRemainingDays);
 
         const totalDays = calculateTotalDays(
           savingGoal.deadline,
-          savingGoal.createdAt
+          savingGoal.createdAt,
         );
         setTotalDays(totalDays);
 
@@ -173,14 +174,14 @@ export default function HomeScreen() {
           savingGoal.amount,
           storedRegularyExpenses,
           storedRegularyIncomes,
-          calculatedRemainingDays
+          calculatedRemainingDays,
         );
 
         const calculatedTodayUsableAmount = calculateTodayUsableAmount(
           calculatedUsableAmountParDay,
           storedExpenses,
           storedIncomes,
-          savingGoal.createdAt
+          savingGoal.createdAt,
         );
 
         setCalculatedTodayUsableAmount(calculatedTodayUsableAmount);
@@ -194,7 +195,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchAndCalculate();
-    }, [])
+    }, []),
   );
 
   // remainingDays, expenses, incomes に依存して再計算
@@ -202,8 +203,17 @@ export default function HomeScreen() {
     fetchAndCalculate();
   }, [remainingDays, expenses, incomes]);
 
+  const isValid =
+    !isNaN(Number(expense)) &&
+    expense.trim() !== "" &&
+    selectedCategory !== null &&
+    1 < Number(expense);
+
   const handleAddExpenseOrIncome = async () => {
-    if (!expense || !selectedCategory) return;
+    if (!expense || !selectedCategory || !isValid) {
+      setShowError(!isValid);
+      return;
+    }
     try {
       const amount = parseFloat(expense);
       const newId = await getNextId(STORAGE_KEYS.EXPENSES);
@@ -218,7 +228,7 @@ export default function HomeScreen() {
       const newItems = await addItemToStorage(
         targetStorageKey,
         isIncomeMode ? incomes : expenses,
-        newItem
+        newItem,
       );
 
       setExpenses(newItems);
@@ -228,7 +238,7 @@ export default function HomeScreen() {
 
       Alert.alert(
         "保存完了",
-        `${isIncomeMode ? "収入" : "支出"}を保存しました`
+        `${isIncomeMode ? "収入" : "支出"}を保存しました`,
       );
     } catch (error) {
       console.error("保存エラー:", error);
@@ -325,6 +335,11 @@ export default function HomeScreen() {
                 onChangeText={setExpense}
               />
             </View>
+            {showError && expense.trim() !== "" && isNaN(Number(expense)) && (
+              <Text style={[styles.errorText]}>
+                目標金額は数字で入力してください
+              </Text>
+            )}
 
             <View style={styles.buttonRow}>
               <ScrollView
@@ -386,8 +401,8 @@ export default function HomeScreen() {
                     !selectedCategory || !expense
                       ? c.secondary // 無効時はグレー背景
                       : isIncomeMode
-                      ? c.income
-                      : c.expense,
+                        ? c.income
+                        : c.expense,
                   opacity: !selectedCategory || !expense ? 0.5 : 1, // 視覚的に無効化
                 },
               ]}
@@ -675,5 +690,10 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
+  },
+  errorText: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "red",
   },
 });
