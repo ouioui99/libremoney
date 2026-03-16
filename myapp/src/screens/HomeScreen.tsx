@@ -39,6 +39,7 @@ import {
 } from "../util/displayUtils";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 
 export default function HomeScreen() {
   const [expense, setExpense] = useState("");
@@ -70,6 +71,8 @@ export default function HomeScreen() {
 
   const { theme } = useTheme();
   const c = colors[theme];
+
+  const adUnitId = "ca-app-pub-3940256099942544/6300978111";
 
   //カテゴリーと収支モード変換
   useEffect(() => {
@@ -279,7 +282,6 @@ export default function HomeScreen() {
             </Text>
           </View>
         </TouchableWithoutFeedback>
-
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           {/* 支出登録 */}
           <View style={[styles.inputCard, { backgroundColor: c.card }]}>
@@ -533,7 +535,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
-
         {/* ✅ カテゴリー別支出 */}
         {/* <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>
@@ -577,6 +578,7 @@ export default function HomeScreen() {
             )}
           />
         </View> */}
+
         {/* カテゴリーセレクター */}
         <CategorySelector
           categories={isIncomeMode ? incomeCategories : expenseCategories}
@@ -595,6 +597,13 @@ export default function HomeScreen() {
           type={isIncomeMode ? "income" : "expense"}
         />
       </View>
+      <BannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
+      />
     </SafeAreaLayout>
   );
 }

@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
+import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, setMode, mode } = useTheme();
@@ -36,6 +37,8 @@ export default function SettingsScreen({ navigation }: any) {
     onToggle?: () => void;
     onPress?: () => void;
   };
+
+  const adUnitId = "ca-app-pub-3940256099942544/6300978111";
 
   const sections: { title: string; data: SettingsItem[] }[] = [
     {
@@ -137,6 +140,13 @@ export default function SettingsScreen({ navigation }: any) {
         )}
         contentContainerStyle={{ paddingTop: 4 }}
         SectionSeparatorComponent={() => <View style={{ height: 5 }} />} // 👈 各セクションの間も詰め気味
+      />
+      <BannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
       />
     </SafeAreaLayout>
   );
