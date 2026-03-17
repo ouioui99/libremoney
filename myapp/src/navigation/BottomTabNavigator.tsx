@@ -29,19 +29,19 @@ export default function BottomTabNavigator() {
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = "home";
 
-          if (route.name === "Home") iconName = "home";
-          else if (route.name === "Expense") iconName = "add-circle";
-          else if (route.name === "Settings") iconName = "settings";
-          else if (route.name === "Budget") iconName = "wallet";
+          if (route.name === "ホーム") iconName = "home";
+          else if (route.name === "登録") iconName = "add-circle";
+          else if (route.name === "設定") iconName = "settings";
+          else if (route.name === "データ") iconName = "wallet";
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Expense" component={ExpenseScreen} />
-      <Tab.Screen name="Budget" component={BudgetScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="ホーム" component={HomeScreen} />
+      <Tab.Screen name="登録" component={ExpenseScreen} />
+      <Tab.Screen name="データ" component={BudgetScreen} />
+      <Tab.Screen name="設定" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
