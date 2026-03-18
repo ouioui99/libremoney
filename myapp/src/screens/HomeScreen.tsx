@@ -597,13 +597,15 @@ export default function HomeScreen() {
           type={isIncomeMode ? "income" : "expense"}
         />
       </View>
-      <BannerAd
-        unitId={adUnitId}
-        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-        requestOptions={{
-          requestNonPersonalizedAdsOnly: true,
-        }}
-      />
+      <View style={{ marginVertical: 10, alignItems: "center" }}>
+        <BannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.LARGE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
+      </View>
     </SafeAreaLayout>
   );
 }

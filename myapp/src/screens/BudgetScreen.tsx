@@ -1,5 +1,10 @@
 import React, { useState, useMemo, useCallback } from "react";
 import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from "react-native-google-mobile-ads";
+import {
   View,
   Text,
   FlatList,
@@ -26,7 +31,7 @@ export default function BudgetScreen() {
   const c = colors[theme];
 
   const [selectedTab, setSelectedTab] = useState<"expense" | "income">(
-    "expense"
+    "expense",
   );
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -36,6 +41,10 @@ export default function BudgetScreen() {
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayLocal());
+
+  const adUnitId = __DEV__
+    ? TestIds.BANNER
+    : "ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx";
 
   // ✅ データ読み込み関数を再利用できるように外に出す
   const loadData = useCallback(async () => {
@@ -65,7 +74,7 @@ export default function BudgetScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
   // ✅ 支出・収入ごとのマーク
@@ -103,17 +112,38 @@ export default function BudgetScreen() {
   const handleSave = async (updated: Expense) => {
     if (selectedTab === "expense") {
       setExpenses((prev) =>
-        prev.map((e) => (e.id === updated.id ? updated : e))
+        prev.map((e) => (e.id === updated.id ? updated : e)),
       );
     } else {
       setIncomes((prev) =>
-        prev.map((e) => (e.id === updated.id ? updated : e))
+        prev.map((e) => (e.id === updated.id ? updated : e)),
       );
     }
 
     // ストレージから再読み込み（即時反映）
     await loadData();
   };
+
+  const dataWithAds = useMemo(() => {
+    const result: any[] = [];
+
+    filteredData.forEach((item, index) => {
+      // 通常アイテム
+      result.push({ type: "item", data: item });
+
+      // 👇 3件目 or 7件ごとに広告
+      if (index === 2 || (index > 2 && (index - 2) % 7 === 0)) {
+        result.push({ type: "ad", id: `ad-${index}` });
+      }
+    });
+
+    // 👇 最下部広告
+    if (filteredData.length > 0) {
+      result.push({ type: "ad", id: "ad-last" });
+    }
+
+    return result;
+  }, [filteredData]);
 
   return (
     <SafeAreaLayout
@@ -186,14 +216,38 @@ export default function BudgetScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredData}
-          keyExtractor={(item) => item.id}
+          data={dataWithAds}
+          keyExtractor={(item, index) =>
+            item.type === "ad" ? item.id : item.data.id
+          }
           renderItem={({ item, index }) => {
-            const category = getCategory(categories, item.categoryId);
+            // ======================
+            // 広告
+            // ======================
+            if (item.type === "ad") {
+              return (
+                <View style={{ marginVertical: 8, alignItems: "center" }}>
+                  <BannerAd
+                    unitId={adUnitId}
+                    size={BannerAdSize.MEDIUM_RECTANGLE}
+                    requestOptions={{
+                      requestNonPersonalizedAdsOnly: true,
+                    }}
+                  />
+                </View>
+              );
+            }
+
+            // ======================
+            // 通常アイテム
+            // ======================
+            const expense = item.data;
+            const category = getCategory(categories, expense.categoryId);
+
             return (
               <TouchableOpacity
                 onPress={() => {
-                  setSelectedExpense(item);
+                  setSelectedExpense(expense);
                   setShowEditModal(true);
                 }}
               >
@@ -205,8 +259,8 @@ export default function BudgetScreen() {
                         index % 2 !== 0
                           ? c.card
                           : theme === "dark"
-                          ? `${c.secondary}60`
-                          : `${c.secondary}90`,
+                            ? `${c.secondary}60`
+                            : `${c.secondary}90`,
                       paddingHorizontal: 12,
                     },
                   ]}
@@ -219,7 +273,7 @@ export default function BudgetScreen() {
                     }}
                   >
                     <Text style={[styles.expenseText, { color: c.text }]}>
-                      ¥{item.amount.toLocaleString()}
+                      ¥{expense.amount.toLocaleString()}
                     </Text>
                     {category && (
                       <View
@@ -249,7 +303,7 @@ export default function BudgetScreen() {
                       marginTop: 4,
                     }}
                   >
-                    📝 {item.memo}
+                    📝 {expense.memo}
                   </Text>
                 </View>
               </TouchableOpacity>
