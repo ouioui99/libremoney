@@ -40,6 +40,8 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import TrackingModal from "../components/TrackingModal";
+import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 
 export default function HomeScreen() {
   const [expense, setExpense] = useState("");
@@ -69,10 +71,26 @@ export default function HomeScreen() {
     ? STORAGE_KEYS.INCOMES
     : STORAGE_KEYS.EXPENSES;
 
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+
   const { theme } = useTheme();
   const c = colors[theme];
 
   const adUnitId = "ca-app-pub-3940256099942544/6300978111";
+
+  const handleAllow = async () => {
+    await requestTrackingPermissionsAsync();
+    await AsyncStorage.setItem("trackingAsked", "true");
+    setShowTrackingModal(false);
+  };
+
+  useEffect(() => {
+    const check = async () => {
+      const asked = await AsyncStorage.getItem("trackingAsked");
+      if (!asked) setShowTrackingModal(true);
+    };
+    check();
+  }, []);
 
   //カテゴリーと収支モード変換
   useEffect(() => {
@@ -606,6 +624,11 @@ export default function HomeScreen() {
           }}
         />
       </View>
+      <TrackingModal
+        visible={showTrackingModal}
+        onAllow={handleAllow}
+        onSkip={() => setShowTrackingModal(false)}
+      />
     </SafeAreaLayout>
   );
 }

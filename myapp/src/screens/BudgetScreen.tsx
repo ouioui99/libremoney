@@ -44,7 +44,7 @@ export default function BudgetScreen() {
 
   const adUnitId = __DEV__
     ? TestIds.BANNER
-    : "ca-app-pub-xxxxxxxxxxxxxxxx/xxxxxxxxxx";
+    : "ca-app-pub-3188429419506365/7339926471";
 
   // ✅ データ読み込み関数を再利用できるように外に出す
   const loadData = useCallback(async () => {

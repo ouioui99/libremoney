@@ -15,8 +15,6 @@ import { colors } from "../theme/colors";
 import { RootStackParamList } from "../types/navigation";
 import { initializeCategoriesIfFirstLaunch } from "../util/categoryUtils";
 
-import mobileAds from "react-native-google-mobile-ads";
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
@@ -24,44 +22,27 @@ export default function AppNavigator() {
   const c = colors[theme];
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(true);
-
-  // const initAd = useCallback(async () => {
-  //   try {
-  //     // ここで初期化する
-  //     await mobileAds().initialize();
-  //   } catch (err) {
-  //     console.warn("initAd", err);
-  //   }
-  // }, []);
-
-  // // 初期データの取得
-  // useEffect(() => {
-  //   initAd();
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    const init = async () => {
       try {
+        // 初回判定
         const launched = await AsyncStorage.getItem("isFirstLaunch");
 
         if (launched === null) {
-          // 初回起動
           setIsFirstLaunch(true);
           initializeCategoriesIfFirstLaunch();
           await AsyncStorage.setItem("isFirstLaunch", "true");
-        } else {
-          // 2回目以降
-          //TODO:開発用
-          //setIsFirstLaunch(false);
         }
-      } catch (error) {
-        console.log("Launch check error:", error);
+      } catch (e) {
+        console.log(e);
       } finally {
         setIsLoading(false);
       }
-    })();
+    };
+
+    init();
   }, []);
 
   // ローディング状態（判定中）
