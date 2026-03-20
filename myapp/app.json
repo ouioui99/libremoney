@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "targetMoney",
-    "slug": "targetMoney",
+    "name": "きょうのヨサン",
+    "slug": "kyono-yosan",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/ios-dark.png",
@@ -19,9 +19,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserTrackingUsageDescription": "許可することで、より関連性の高い広告を表示することができるようになります。",
-        "LSApplicationQueriesSchemes": [
-          "about"
-        ]
+        "LSApplicationQueriesSchemes": ["about"]
       }
     },
     "plugins": [
