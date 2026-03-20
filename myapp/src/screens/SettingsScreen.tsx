@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
@@ -26,6 +27,15 @@ export default function SettingsScreen({ navigation }: any) {
 
   const handleTargetSettings = () => navigation.navigate("SavingsGoal");
   const handleIncomeSettings = () => navigation.navigate("manageRegulaIncome");
+  const linkToPrivacy = () => {
+    Linking.openURL(
+      "https://ouioui99.github.io/libremoneyPrivacy/docs/Privacy/PrivacyPolicy.html",
+    );
+  };
+  const linkToInquiry = () =>
+    Linking.openURL(
+      "https://docs.google.com/forms/d/e/1FAIpQLSfDL_0fwFmaUtiF2GOjkY9rsTqjK2NBHEIBdJNs5QPKbE7t9A/viewform?usp=header",
+    );
   const handleRegularExpenseSettings = () =>
     navigation.navigate("manageRegulaExpense");
 
@@ -82,13 +92,19 @@ export default function SettingsScreen({ navigation }: any) {
       ],
     },
     {
-      title: "アプリ情報",
+      title: "その他",
       data: [
         {
-          key: "version",
-          label: "バージョン",
-          type: "info",
-          value: "1.0.0",
+          key: "privacy",
+          label: "プライバシーポリシー",
+          type: "link",
+          onPress: linkToPrivacy,
+        },
+        {
+          key: "inquiry",
+          label: "お問い合わせ",
+          type: "link",
+          onPress: linkToInquiry,
         },
       ],
     },
