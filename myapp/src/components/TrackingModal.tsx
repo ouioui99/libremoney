@@ -38,16 +38,15 @@ const TrackingModal = ({ visible, onAllow, onSkip }: Props) => {
           </View>
 
           {/* タイトル */}
-          <Text style={[styles.title, { color: c.text }]}>
-            無料で使い続けるために
-          </Text>
+          <Text style={[styles.title, { color: c.text }]}>広告表示の設定</Text>
 
           {/* 説明 */}
           <Text style={[styles.description, { color: c.subText }]}>
-            このアプリは広告収益で運営されています。
-            {"\n"}
-            許可すると、あなたに合った広告が表示され、
-            より快適にご利用いただけます。
+            次の画面で広告設定を選択できます。{"\n"}
+            許可すると、あなたに合った広告が表示されます。{"\n"}
+            許可しなくても
+            <Text style={{ color: c.income, fontWeight: "800" }}>無料で</Text>
+            ご利用いただけます。
           </Text>
 
           {/* ボタン */}
@@ -56,7 +55,7 @@ const TrackingModal = ({ visible, onAllow, onSkip }: Props) => {
             onPress={onAllow}
           >
             <Text style={[styles.primaryText, { color: c.textOnAccent }]}>
-              無料で続ける
+              設定を確認する
             </Text>
           </TouchableOpacity>
 
@@ -123,5 +122,11 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 13,
+  },
+  noticeText: {
+    fontSize: 13,
+    marginBottom: 24,
+    textAlign: "center",
+    opacity: 0.9, // ほんの少しだけ透過させて馴染ませる
   },
 });
