@@ -24,6 +24,7 @@ import { Expense, Category } from "../types/models";
 import { getCategory } from "../util/displayUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { getTodayLocal } from "../util/dateUtils";
+import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function BudgetScreen() {
   const insets = useSafeAreaInsets();
@@ -42,9 +43,7 @@ export default function BudgetScreen() {
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayLocal());
 
-  const adUnitId = __DEV__
-    ? TestIds.BANNER
-    : "ca-app-pub-3188429419506365/7339926471";
+  const adUnitId = AD_UNIT_IDS.BudgetScreen;
 
   // ✅ データ読み込み関数を再利用できるように外に出す
   const loadData = useCallback(async () => {

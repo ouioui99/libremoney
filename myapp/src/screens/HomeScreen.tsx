@@ -39,9 +39,14 @@ import {
 } from "../util/displayUtils";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import {
+  BannerAd,
+  BannerAdSize,
+  TestIds,
+} from "react-native-google-mobile-ads";
 import TrackingModal from "../components/TrackingModal";
 import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
+import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function HomeScreen() {
   const [expense, setExpense] = useState("");
@@ -76,7 +81,7 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const adUnitId = "ca-app-pub-3940256099942544/6300978111";
+  const adUnitId = AD_UNIT_IDS.HomeScreen;
 
   const handleAllow = async () => {
     await requestTrackingPermissionsAsync();
