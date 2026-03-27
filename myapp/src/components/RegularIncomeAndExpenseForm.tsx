@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
-import { Category, CycleRule } from "../types/models";
+import { Category, CycleRule, RegularIncome } from "../types/models";
 import CycleRuleSettingModal from "./CycleRuleSettingModal";
 
 type Props = {
@@ -26,11 +26,19 @@ type Props = {
     amount: number,
     memo: string,
     categoryId: string,
-
+    cycleRule: CycleRule["type"],
+  ) => void;
+  // 編集用のハンドラーを追加
+  onUpdate?: (
+    id: string,
+    amount: number,
+    memo: string,
+    categoryId: string,
     cycleRule: CycleRule["type"],
   ) => void;
   onPressCategorySelect: () => void;
   type: "expense" | "income";
+  itemToEdit?: RegularIncome;
 };
 
 const RegularIncomeAndExpenseForm: React.FC<Props> = ({
@@ -38,17 +46,60 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   setSelectedCategory,
   categories,
   onAdd,
+  onUpdate,
   onPressCategorySelect,
   type,
+  itemToEdit,
 }) => {
   const { theme } = useTheme();
   const c = colors[theme];
+
+  // State定義
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
-
   const [cycleRuleType, setCycleRuleType] = useState<CycleRule["type"]>();
   const [showCycleRuleSettingModal, setShowCycleRuleSettingModal] =
     useState(false);
+
+  // 編集モード判定
+  const isEditMode = !!itemToEdit;
+
+  // itemToEdit が渡された時、または変更された時にフォームを埋める
+  useEffect(() => {
+    if (itemToEdit) {
+      setAmount(itemToEdit.amount.toString());
+      setMemo(itemToEdit.memo || "");
+      setCycleRuleType(itemToEdit.cycleRule.type);
+
+      // カテゴリーオブジェクトを親コンポーネントのStateにセット
+      const currentCategory = categories.find(
+        (cat) => cat.id === itemToEdit.categoryId,
+      );
+      console.log(currentCategory);
+      if (currentCategory) {
+        setSelectedCategory(currentCategory);
+      }
+    } else {
+      // 新規作成時はクリア
+      setAmount("");
+      setMemo("");
+      setCycleRuleType(undefined);
+      setSelectedCategory(undefined);
+    }
+  }, [itemToEdit, categories, setSelectedCategory]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      const currentCategory = categories.find(
+        (cat) => cat.id === selectedCategory.id,
+      );
+      if (currentCategory) {
+        setSelectedCategory(currentCategory);
+      }
+
+      // フォーム内で表示に使うStateがあればここで更新（現在はPropsを直接見ているなら不要）
+    }
+  }, [selectedCategory]);
 
   const handleSubmit = () => {
     if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
@@ -58,20 +109,40 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
       return Alert.alert("入力エラー", "サイクルルールを設定してください");
     if (!selectedCategory)
       return Alert.alert("入力エラー", "カテゴリーを設定してください");
-    onAdd(Number(amount), memo, selectedCategory.id, cycleRuleType);
-    setAmount("");
-    setMemo("");
-    setSelectedCategory(undefined);
-    setCycleRuleType(undefined);
+
+    if (isEditMode && itemToEdit && onUpdate) {
+      // 更新処理
+      onUpdate(
+        itemToEdit.id,
+        Number(amount),
+        memo,
+        selectedCategory.id,
+        cycleRuleType,
+      );
+    } else {
+      // 新規追加処理
+      onAdd(Number(amount), memo, selectedCategory.id, cycleRuleType);
+    }
+
+    // フォームのリセット（編集時は親側で閉じることが多いため、適宜調整）
+    if (!isEditMode) {
+      setAmount("");
+      setMemo("");
+      setSelectedCategory(undefined);
+      setCycleRuleType(undefined);
+    }
   };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View
-        style={{ justifyContent: "center", alignItems: "center", marginTop: 8 }}
-      >
+      <View style={styles.formContainer}>
         <View style={{ width: "95%", maxWidth: 400 }}>
           <View style={[styles.card, { backgroundColor: c.card }]}>
+            {/* タイトル（任意） */}
+            <Text style={[styles.title, { color: c.text }]}>
+              {isEditMode ? "定期収入を編集" : "定期収入を追加"}
+            </Text>
+
             {/* 金額 */}
             <Text style={[styles.label, { color: c.text }]}>金額</Text>
             <TextInput
@@ -130,6 +201,9 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
             </TouchableOpacity>
 
             {/* サイクルルール */}
+            <Text style={[styles.label, { color: c.text, marginTop: 12 }]}>
+              サイクル
+            </Text>
             <TouchableOpacity
               style={[styles.cycleButton, { backgroundColor: c.accent }]}
               onPress={() => setShowCycleRuleSettingModal(true)}
@@ -146,20 +220,30 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               </Text>
             </TouchableOpacity>
 
-            {/* 追加ボタン */}
+            {/* 送信ボタン（テキストとアイコンを動的に変更） */}
             <TouchableOpacity
               style={[
                 styles.addButton,
                 {
                   backgroundColor:
-                    amount && cycleRuleType ? c.accent : c.disabledOnCard,
+                    amount && cycleRuleType
+                      ? isEditMode
+                        ? "#4CAF50"
+                        : c.accent
+                      : c.disabledOnCard,
                 },
               ]}
               disabled={!amount || !cycleRuleType}
               onPress={handleSubmit}
             >
-              <Ionicons name="add" size={20} color="#fff" />
-              <Text style={styles.addButtonText}>追加</Text>
+              <Ionicons
+                name={isEditMode ? "checkmark" : "add"}
+                size={20}
+                color="#fff"
+              />
+              <Text style={styles.addButtonText}>
+                {isEditMode ? "更新する" : "追加する"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -182,12 +266,24 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
 export default RegularIncomeAndExpenseForm;
 
 const styles = StyleSheet.create({
+  formContainer: {
+    width: "100%",
+    alignItems: "stretch", // 子供を横いっぱいに広げる
+  },
   card: {
     borderRadius: 16,
     paddingVertical: 20,
     paddingHorizontal: 18,
-    marginTop: 16,
-    marginBottom: 24,
+    marginVertical: 10,
+    // marginHorizontal: 20 などで、画面の端とカードの間に隙間を作る
+    marginHorizontal: Platform.OS === "ios" ? 16 : 10,
+    width: "auto", // これでmaxWidthなどを気にせず画面幅いっぱいまで広がる
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+    textAlign: "center",
   },
   label: { fontSize: 15, fontWeight: "600" },
   input: {
@@ -205,6 +301,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 4,
   },
   cycleButton: {
     flexDirection: "row",
@@ -212,13 +309,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 8,
     paddingVertical: 12,
-    marginTop: 16,
+    marginTop: 4,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
+    marginTop: 24,
     borderRadius: 10,
     paddingVertical: 12,
   },

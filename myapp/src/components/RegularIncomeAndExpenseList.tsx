@@ -1,4 +1,3 @@
-// components/RegularIncomeList.tsx
 import React from "react";
 import {
   View,
@@ -18,6 +17,7 @@ type Props = {
   colors: any;
   onDelete: (id: string) => void;
   type: string;
+  onClickItem: (incomeItem: RegularIncome) => void;
 };
 
 export default function RegularIncomeAndExpenseList({
@@ -27,6 +27,7 @@ export default function RegularIncomeAndExpenseList({
   colors: c,
   onDelete,
   type,
+  onClickItem,
 }: Props) {
   return (
     <>
@@ -68,29 +69,30 @@ export default function RegularIncomeAndExpenseList({
             index % 2 !== 0
               ? c.card
               : theme === "dark"
-              ? `${c.secondary}60`
-              : `${c.secondary}90`;
+                ? `${c.secondary}60`
+                : `${c.secondary}90`;
 
           return (
             <TouchableOpacity
-              onPress={() =>
-                Alert.alert(
-                  "収入詳細",
-                  `${item.memo || "メモなし"}\n${
-                    category?.name ?? "未設定"
-                  }\n${item.amount.toLocaleString()} 円 / ${
-                    item.cycleRule.type
-                  }`,
-                  [
-                    { text: "閉じる" },
-                    {
-                      text: "削除",
-                      style: "destructive",
-                      onPress: () => onDelete(item.id),
-                    },
-                  ]
-                )
-              }
+              // onPress={() =>
+              //   Alert.alert(
+              //     "収入詳細",
+              //     `${item.memo || "メモなし"}\n${
+              //       category?.name ?? "未設定"
+              //     }\n${item.amount.toLocaleString()} 円 / ${
+              //       item.cycleRule.type
+              //     }`,
+              //     [
+              //       { text: "閉じる" },
+              //       {
+              //         text: "削除",
+              //         style: "destructive",
+              //         onPress: () => onDelete(item.id),
+              //       },
+              //     ],
+              //   )
+              // }
+              onPress={() => onClickItem(item)}
             >
               <View
                 style={[

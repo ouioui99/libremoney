@@ -16,6 +16,7 @@ import { Category, CycleRule, RegularIncome } from "../types/models";
 import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
 import RegularIncomeAndExpenseForm from "../components/RegularIncomeAndExpenseForm";
 import RegularIncomeAndExpenseList from "../components/RegularIncomeAndExpenseList";
+import EditRegularIncomeModal from "../components/EditRegularIncomeModal";
 
 export default function ManageRegularExpenseScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -23,7 +24,10 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
 
   const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category>();
+
+  const [addingCategory, setAddingCategory] = useState<Category>(); // 新規用
+  const [editingCategory, setEditingCategory] = useState<Category>(); // 編集用
+
   const [expenses, setExpenses] = useState<RegularIncome[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
@@ -31,6 +35,11 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
     useState(false);
 
   const [cycleRuleType, setCycleRuleType] = useState<CycleRule["type"]>();
+  const [editingItem, setEditingItem] = useState<RegularIncome | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
+
+  // カテゴリ選択モーダルが「新規から呼ばれたか」「編集から呼ばれたか」を判定するフラグ
+  const [isCategoryForEdit, setIsCategoryForEdit] = useState(false);
 
   useEffect(() => {
     loadExpenses();
@@ -59,8 +68,35 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
     setExpenses(newList);
     await AsyncStorage.setItem(
       STORAGE_KEYS.REGULARLY_EXPENSES,
-      JSON.stringify(newList)
+      JSON.stringify(newList),
     );
+  };
+
+  // 編集アイテムをクリックした時
+  const onClickItem = (item: RegularIncome) => {
+    setEditingItem(item);
+    // 編集用Stateにそのアイテムのカテゴリをセット
+    const currentCat = categories.find((c) => c.id === item.categoryId);
+    setEditingCategory(currentCat);
+    setEditModalVisible(true);
+  };
+
+  // 更新処理
+  const handleUpdate = (
+    id: string,
+    amount: number,
+    memo: string,
+    categoryId: string,
+    cycleRule: CycleRule["type"],
+  ) => {
+    const updated = expenses.map((item) =>
+      item.id === id
+        ? { ...item, amount, memo, categoryId, cycleRule: { type: cycleRule } }
+        : item,
+    );
+    saveExpenses(updated);
+    setEditModalVisible(false);
+    setEditingItem(null);
   };
 
   const handleDelete = (id: string) => {
@@ -77,6 +113,28 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
     ]);
   };
 
+  const handlePressCategorySelectInEdit = () => {
+    // 1. 編集モーダルを一旦閉じる（Modalの重複を避けるため）
+    setEditModalVisible(false);
+    // 2. カテゴリ選択モーダルを開く
+    setShowCategoryModal(true);
+  };
+
+  // カテゴリ選択時の共通処理
+  const handleCategorySelect = (category: Category) => {
+    if (isCategoryForEdit) {
+      setEditingCategory(category); // 編集中のカテゴリを更新
+    } else {
+      setAddingCategory(category); // 新規追加フォームのカテゴリを更新
+    }
+    setShowCategoryModal(false);
+
+    // 編集モーダルから来ていた場合は、少し遅らせて編集モーダルを再表示
+    if (isCategoryForEdit) {
+      setTimeout(() => setEditModalVisible(true), 500);
+    }
+  };
+
   return (
     <SafeAreaLayout
       style={[styles.container, { backgroundColor: c.background }]}
@@ -89,10 +147,13 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
       />
       {/* 追加フォーム */}
       <RegularIncomeAndExpenseForm
-        setSelectedCategory={setSelectedCategory}
-        selectedCategory={selectedCategory}
+        selectedCategory={addingCategory}
+        setSelectedCategory={setAddingCategory as any}
         categories={categories}
-        onPressCategorySelect={() => setShowCategoryModal(true)} // 👈 追加
+        onPressCategorySelect={() => {
+          setIsCategoryForEdit(false); // 新規用として開く
+          setShowCategoryModal(true);
+        }}
         onAdd={(amount, memo, categoryId, cycleRule) => {
           const newIncome: RegularIncome = {
             id: Date.now().toString(),
@@ -103,6 +164,7 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
           };
           const updated = [...expenses, newIncome];
           saveExpenses(updated);
+          setAddingCategory(undefined);
         }}
         type="expense"
       />
@@ -115,6 +177,29 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
         colors={c}
         onDelete={handleDelete}
         type="支出"
+        onClickItem={(item) => onClickItem(item)}
+      />
+
+      {/* 編集用モーダル */}
+      <EditRegularIncomeModal
+        visible={editModalVisible}
+        item={editingItem}
+        categories={categories}
+        type="expense"
+        selectedCategory={editingCategory} // 編集用Stateを渡す
+        setSelectedCategory={setEditingCategory as any}
+        onPressCategorySelect={() => {
+          setEditModalVisible(false); // 編集モーダルを隠す
+          setIsCategoryForEdit(true); // 編集用として開くフラグを立てる
+          setShowCategoryModal(true);
+        }}
+        onUpdate={handleUpdate}
+        onClose={() => {
+          setEditModalVisible(false);
+          setEditingItem(null);
+          // 編集が終わったら編集用Stateもクリア（新規側には影響しない）
+          setEditingCategory(undefined);
+        }}
       />
 
       {/* カテゴリーセレクター */}
@@ -122,12 +207,18 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
         categories={categories}
         setCategories={setCategories}
         selectedCategoryId={categoryId}
-        onSelect={(category: Category) => setSelectedCategory(category)}
+        onSelect={handleCategorySelect}
         onReorder={handleCategoryReorder}
         onDelete={handleCategoryDelete}
         onEditSave={handleCategoryEditOnSave}
         showCategoryModal={showCategoryModal}
-        setShowCategoryModal={setShowCategoryModal}
+        setShowCategoryModal={(visible) => {
+          setShowCategoryModal(visible);
+          // カテゴリ選択せずに閉じた場合も、編集モード中なら編集モーダルに戻す
+          if (!visible && isCategoryForEdit) {
+            setTimeout(() => setEditModalVisible(true), 500);
+          }
+        }}
         showCategoryListModal={showCategoryListModal}
         setShowCategoryListModal={setShowCategoryListModal}
         type="expense"
