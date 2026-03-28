@@ -96,7 +96,7 @@ export default function OnboardingScreen({ navigation }: Props) {
         style={[
           styles.button,
           {
-            backgroundColor: c.accent,
+            backgroundColor: c.operator,
           },
         ]}
         onPress={() => {

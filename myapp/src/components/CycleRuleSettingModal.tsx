@@ -191,8 +191,8 @@ const CycleRuleSettingModal: React.FC<CycleRuleSettingModalProps> = ({
               style={[
                 styles.saveButton,
                 {
-                  backgroundColor: selectedCycle ? c.accent : c.border,
-                  shadowColor: c.accent,
+                  backgroundColor: selectedCycle ? c.operator : c.border,
+                  shadowColor: c.operator,
                 },
               ]}
               disabled={!selectedCycle}

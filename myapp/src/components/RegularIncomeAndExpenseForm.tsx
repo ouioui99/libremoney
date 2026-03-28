@@ -61,6 +61,12 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   const [showCycleRuleSettingModal, setShowCycleRuleSettingModal] =
     useState(false);
 
+  const [errors, setErrors] = useState<{
+    amount?: string;
+    category?: string;
+    cycle?: string;
+  }>({});
+
   // 編集モード判定
   const isEditMode = !!itemToEdit;
 
@@ -102,13 +108,29 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   }, [selectedCategory]);
 
   const handleSubmit = () => {
-    if (!amount) return Alert.alert("入力エラー", "金額を入力してください。");
-    if (isNaN(Number(amount)))
-      return Alert.alert("入力エラー", "金額には数字を入力してください。");
-    if (!cycleRuleType)
-      return Alert.alert("入力エラー", "サイクルルールを設定してください");
-    if (!selectedCategory)
-      return Alert.alert("入力エラー", "カテゴリーを設定してください");
+    const newErrors: typeof errors = {};
+
+    if (!amount) {
+      newErrors.amount = "金額を入力してください";
+    } else if (isNaN(Number(amount))) {
+      newErrors.amount = "数字を入力してください";
+    }
+
+    if (!cycleRuleType) {
+      newErrors.cycle = "サイクルを設定してください";
+    }
+
+    if (!selectedCategory) {
+      newErrors.category = "カテゴリーを選択してください";
+    }
+    setErrors(newErrors);
+
+    if (
+      !selectedCategory ||
+      !cycleRuleType ||
+      Object.keys(newErrors).length > 0
+    )
+      return;
 
     if (isEditMode && itemToEdit && onUpdate) {
       // 更新処理
@@ -139,27 +161,32 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
         <View style={{ width: "95%", maxWidth: 400 }}>
           <View style={[styles.card, { backgroundColor: c.card }]}>
             {/* タイトル（任意） */}
-            <Text style={[styles.title, { color: c.text }]}>
+            {/* <Text style={[styles.title, { color: c.text }]}>
               {isEditMode ? "定期収入を編集" : "定期収入を追加"}
-            </Text>
+            </Text> */}
 
             {/* 金額 */}
             <Text style={[styles.label, { color: c.text }]}>金額</Text>
             <TextInput
               value={amount}
-              onChangeText={setAmount}
-              placeholder="例: 250000"
-              keyboardType="numeric"
-              placeholderTextColor={c.placeholder}
+              onChangeText={(text) => {
+                setAmount(text);
+                setErrors((prev) => ({ ...prev, amount: undefined }));
+              }}
               style={[
                 styles.input,
                 {
                   backgroundColor: c.background,
                   color: c.text,
-                  borderColor: c.border,
+                  borderColor: errors.amount ? c.error : c.border,
                 },
               ]}
             />
+            {errors.amount && (
+              <Text style={{ color: c.error, fontSize: 12, marginTop: 4 }}>
+                {errors.amount}
+              </Text>
+            )}
 
             {/* メモ */}
             <Text style={[styles.label, { color: c.text, marginTop: 12 }]}>
@@ -190,7 +217,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
                 styles.categoryButton,
                 {
                   backgroundColor: c.background,
-                  borderColor: c.border,
+                  borderColor: errors.category ? c.error : c.border,
                 },
               ]}
             >
@@ -200,12 +227,24 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               <Ionicons name="chevron-down" size={18} color={c.text} />
             </TouchableOpacity>
 
+            {errors.category && (
+              <Text style={{ color: c.error, fontSize: 12, marginTop: 4 }}>
+                {errors.category}
+              </Text>
+            )}
+
             {/* サイクルルール */}
             <Text style={[styles.label, { color: c.text, marginTop: 12 }]}>
               サイクル
             </Text>
             <TouchableOpacity
-              style={[styles.cycleButton, { backgroundColor: c.accent }]}
+              style={[
+                styles.cycleButton,
+                {
+                  borderColor: errors.cycle ? c.error : c.accent,
+                  backgroundColor: c.accent,
+                },
+              ]}
               onPress={() => setShowCycleRuleSettingModal(true)}
             >
               <Ionicons name="repeat-outline" size={18} color={c.text} />
@@ -219,21 +258,22 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
                       : "年1（毎年）"}
               </Text>
             </TouchableOpacity>
+            {errors.cycle && (
+              <Text style={{ color: c.error, fontSize: 12, marginTop: 4 }}>
+                {errors.cycle}
+              </Text>
+            )}
 
             {/* 送信ボタン（テキストとアイコンを動的に変更） */}
             <TouchableOpacity
               style={[
                 styles.addButton,
                 {
-                  backgroundColor:
-                    amount && cycleRuleType
-                      ? isEditMode
-                        ? "#4CAF50"
-                        : c.accent
-                      : c.disabledOnCard,
+                  backgroundColor: c.operator,
+                  //amount && cycleRuleType ? c.operator : c.disabledOnCard,
                 },
               ]}
-              disabled={!amount || !cycleRuleType}
+              //disabled={!amount || !cycleRuleType}
               onPress={handleSubmit}
             >
               <Ionicons
@@ -310,6 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     marginTop: 4,
+    borderWidth: 1,
   },
   addButton: {
     flexDirection: "row",
