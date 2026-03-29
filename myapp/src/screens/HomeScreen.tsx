@@ -245,8 +245,12 @@ export default function HomeScreen() {
       return;
     }
     try {
+      const strageKey = isIncomeMode
+        ? STORAGE_KEYS.INCOMES
+        : STORAGE_KEYS.EXPENSES;
+
       const amount = parseFloat(expense);
-      const newId = await getNextId(STORAGE_KEYS.EXPENSES);
+      const newId = await getNextId(strageKey);
 
       const newItem = {
         id: newId,
@@ -261,7 +265,7 @@ export default function HomeScreen() {
         newItem,
       );
 
-      setExpenses(newItems);
+      isIncomeMode ? setIncomes(newItems) : setExpenses(newItems);
       setExpense("");
       setSelectedCategory(undefined);
       inputRef.current?.blur();
