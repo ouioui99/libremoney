@@ -28,6 +28,7 @@ import {
   handleCategoryEditOnSave,
   handleCategoryReorder,
 } from "../util/categoryUtils";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 const displayConfirmBtn = "登録";
 
@@ -49,11 +50,19 @@ export default function ExpenseScreen() {
   const { theme } = useTheme();
   const c = colors[theme];
 
+  const { showSnackbar } = useSnackbar();
+
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // ▼ フェード・色アニメーション設定
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const colorAnim = useRef(new Animated.Value(0)).current; // 0 = expense, 1 = income
+
+  const [errors, setErrors] = useState<{
+    amount?: string;
+    category?: string;
+    date?: string;
+  }>({});
 
   const firstRender = useRef(true);
 
@@ -148,6 +157,7 @@ export default function ExpenseScreen() {
 
   // 電卓ボタン押下処理
   const handlePress = (val: string) => {
+    setErrors((prev) => ({ ...prev, amount: undefined }));
     if (expression === "Error" && val !== "AC" && val !== "C") {
       if (/[0-9.]/.test(val)) {
         setExpression(val === "." ? "0." : val);
@@ -252,19 +262,35 @@ export default function ExpenseScreen() {
         ? STORAGE_KEYS.INCOMES
         : STORAGE_KEYS.EXPENSES; // 👈 切替
 
+      const newErrors: typeof errors = {};
+
       const newId = await getNextId(storageKey);
       if (isNaN(amount)) {
-        Alert.alert("エラー", "正しい金額を入力してください");
+        newErrors.amount = "正しい金額を入力してください";
+      }
+
+      if (!selectedCategory) {
+        newErrors.category = "カテゴリーを選択してください";
+        setErrors(newErrors);
+      }
+
+      if (amount < 1) {
+        newErrors.amount = "金額は1以上の数字で入力してください";
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        if (newErrors.amount) {
+          showSnackbar(newErrors.amount);
+        } else if (newErrors.category) {
+          showSnackbar(newErrors.category);
+        } else if (newErrors.date) {
+          showSnackbar(newErrors.date);
+        }
         return;
       }
 
       if (!selectedCategory) {
-        Alert.alert("エラー", "カテゴリーを選択してください");
-        return;
-      }
-
-      if (amount < 1) {
-        Alert.alert("エラー", "金額は1以上の数字で入力してください");
         return;
       }
 
@@ -279,10 +305,7 @@ export default function ExpenseScreen() {
 
       setExpenses(newItems);
 
-      Alert.alert(
-        "保存完了",
-        `${isIncomeMode ? "収入" : "支出"}を保存しました`,
-      );
+      showSnackbar(`${isIncomeMode ? "収入" : "支出"}を保存しました`);
 
       setExpression("");
       setMemo("");
@@ -319,6 +342,8 @@ export default function ExpenseScreen() {
                 fontSize: 40,
                 textAlign: "right",
                 marginBottom: 5,
+                borderWidth: 2,
+                borderColor: errors.amount ? c.error : "transparent",
               }}
             >
               {expression || "0"}
@@ -344,8 +369,12 @@ export default function ExpenseScreen() {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "center",
+                    borderWidth: 2,
+                    borderColor: errors.date ? c.error : "transparent",
                   }}
-                  onPress={() => setShowPicker(true)}
+                  onPress={() => {
+                    setShowPicker(true);
+                  }}
                 >
                   <Text style={{ color: c.text, fontSize: 18 }}>{date}</Text>
                 </TouchableOpacity>
@@ -362,6 +391,8 @@ export default function ExpenseScreen() {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    borderWidth: 2,
+                    borderColor: errors.category ? c.error : "transparent",
                   }}
                 >
                   {selectedCategory ? (
@@ -406,7 +437,10 @@ export default function ExpenseScreen() {
               visible={showPicker}
               date={date}
               onClose={() => setShowPicker(false)}
-              onChange={(selectedDate) => setDate(selectedDate)}
+              onChange={(selectedDate) => {
+                setDate(selectedDate);
+                setErrors((prev) => ({ ...prev, date: undefined }));
+              }}
             />
           </View>
 
@@ -417,7 +451,10 @@ export default function ExpenseScreen() {
               isIncomeMode ? setIncomeCategories : setExpenseCategories
             }
             selectedCategoryId={selectedCategory?.id}
-            onSelect={(category: Category) => setSelectedCategory(category)}
+            onSelect={(category: Category) => {
+              setSelectedCategory(category);
+              setErrors((prev) => ({ ...prev, category: undefined }));
+            }}
             onReorder={handleCategoryReorder}
             onDelete={handleCategoryDelete}
             onEditSave={handleCategoryEditOnSave}
@@ -444,7 +481,12 @@ export default function ExpenseScreen() {
                     return (
                       <TouchableOpacity
                         key="incomeToggle"
-                        onPress={() => setIsIncomeMode((prev) => !prev)}
+                        onPress={() => {
+                          setIsIncomeMode((prev) => !prev);
+                          setErrors((prev) => ({}));
+                          setSelectedCategory(undefined);
+                          setMemo("");
+                        }}
                         activeOpacity={0.8}
                         style={{
                           flex: 1,
