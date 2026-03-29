@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "きょうのヨサン",
-    "slug": "kyono-yosan",
+    "slug": "myapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/ios-dark.png",
@@ -19,7 +19,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserTrackingUsageDescription": "許可することで、より関連性の高い広告を表示することができるようになります。",
-        "LSApplicationQueriesSchemes": ["about"]
+        "LSApplicationQueriesSchemes": [
+          "about"
+        ]
       }
     },
     "plugins": [
@@ -53,7 +55,6 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "com.google.android.gms.permission.AD_ID",
         "com.google.android.gms.permission.AD_ID"
       ],
       "package": "com.ouioui99.targetMoney"
@@ -65,6 +66,7 @@
       "eas": {
         "projectId": "e85ac583-b1f0-4b71-b2f4-da0ac6f9ad34"
       }
-    }
+    },
+    "owner": "qp5min15min"
   }
 }

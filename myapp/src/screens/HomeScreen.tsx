@@ -10,6 +10,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   ScrollView,
+  Button,
 } from "react-native";
 import { colors } from "../theme/colors";
 import SafeAreaLayout from "../components/SafeAreaLayout";
@@ -46,7 +47,8 @@ import {
 } from "react-native-google-mobile-ads";
 import TrackingModal from "../components/TrackingModal";
 import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
-import { AD_UNIT_IDS } from "../../adConfig";
+import { useSnackbar } from "../contexts/SnackbarContext";
+// import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function HomeScreen() {
   const [expense, setExpense] = useState("");
@@ -81,7 +83,9 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const c = colors[theme];
 
-  const adUnitId = AD_UNIT_IDS.HomeScreen;
+  const { showSnackbar } = useSnackbar();
+
+  // const adUnitId = AD_UNIT_IDS.HomeScreen;
 
   const handleAllow = async () => {
     await requestTrackingPermissionsAsync();
@@ -99,7 +103,7 @@ export default function HomeScreen() {
 
   //カテゴリーと収支モード変換
   useEffect(() => {
-    //開発用
+    //開発用データリセット
     // AsyncStorage.setItem(STORAGE_KEYS.EXPENSE_CATEGORIES, JSON.stringify([]));
     // AsyncStorage.setItem(STORAGE_KEYS.INCOME_CATEGORIES, JSON.stringify([]));
     // AsyncStorage.setItem("categories", JSON.stringify([]));
@@ -262,10 +266,12 @@ export default function HomeScreen() {
       setSelectedCategory(undefined);
       inputRef.current?.blur();
 
-      Alert.alert(
-        "保存完了",
-        `${isIncomeMode ? "収入" : "支出"}を保存しました`,
-      );
+      showSnackbar(`${isIncomeMode ? "収入" : "支出"}を保存しました`);
+
+      // Alert.alert(
+      //   "保存完了",
+      //   `${isIncomeMode ? "収入" : "支出"}を保存しました`,
+      // );
     } catch (error) {
       console.error("保存エラー:", error);
       Alert.alert("エラー", "保存に失敗しました");
@@ -621,13 +627,13 @@ export default function HomeScreen() {
         />
       </View>
       <View style={{ marginVertical: 10, alignItems: "center" }}>
-        <BannerAd
+        {/* <BannerAd
           unitId={adUnitId}
           size={BannerAdSize.LARGE_BANNER}
           requestOptions={{
             requestNonPersonalizedAdsOnly: true,
           }}
-        />
+        /> */}
       </View>
       <TrackingModal
         visible={showTrackingModal}
