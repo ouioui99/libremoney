@@ -50,7 +50,7 @@ import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { useSnackbar } from "../contexts/SnackbarContext";
 // import { AD_UNIT_IDS } from "../../adConfig";
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: any) {
   const [expense, setExpense] = useState("");
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Expense[]>([]);
@@ -305,16 +305,66 @@ export default function HomeScreen() {
     <SafeAreaLayout style={{ backgroundColor: c.background, flex: 1 }}>
       <View style={{ flex: 1, padding: 16 }}>
         {/* 今日使える金額 */}
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        {remainingDays < 0 ? (
           <View style={[styles.card, { backgroundColor: c.card }]}>
-            <Text style={[styles.label, { color: c.text }]}>
-              今日使える金額
+            <Text
+              style={{
+                color: c.text,
+                fontSize: 16,
+                fontWeight: "700",
+                marginBottom: 10,
+              }}
+            >
+              貯金目標が終了しました
             </Text>
-            <Text style={[styles.mainAmount, { color: c.accent }]}>
-              ¥{calculatedTodayUsableAmount.toLocaleString()}
+
+            <Text
+              style={{
+                color: c.placeholder,
+                fontSize: 14,
+                marginBottom: 16,
+              }}
+            >
+              新しい目標を設定して、引き続き貯金を管理しましょう
             </Text>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: c.accent,
+                paddingVertical: 12,
+                borderRadius: 10,
+                alignItems: "center",
+              }}
+              onPress={() => {
+                navigation.navigate("SavingsGoal");
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 15,
+                  fontWeight: "600",
+                }}
+              >
+                新しい目標を設定
+              </Text>
+            </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
+        ) : (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={[styles.card, { backgroundColor: c.card }]}>
+              <Text style={[styles.label, { color: c.text }]}>
+                今日使える金額
+              </Text>
+
+              <Text style={[styles.subLabel, { color: c.text }]}>残り</Text>
+
+              <Text style={[styles.mainAmount, { color: c.accent }]}>
+                ¥{calculatedTodayUsableAmount.toLocaleString()}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
+        )}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           {/* 支出登録 */}
           <View style={[styles.inputCard, { backgroundColor: c.card }]}>
@@ -459,115 +509,125 @@ export default function HomeScreen() {
           </View>
         </TouchableWithoutFeedback>
         {/* 目標貯金額 + 残り日数 */}
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View
-            style={{
-              backgroundColor: c.card,
-              borderRadius: 16,
-              padding: 16,
-              marginVertical: 8,
-              shadowColor: "#000",
-              shadowOpacity: theme === "light" ? 0.05 : 0.3,
-              shadowRadius: 4,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 3, // Android用
-            }}
-          >
-            {/* タイトル */}
-            <Text
-              style={{
-                color: c.text,
-                fontSize: 16,
-                fontWeight: "700",
-                marginBottom: 12,
-              }}
-            >
-              現在の貯金目標
-            </Text>
-
-            {/* 目標貯金額 */}
-            <Text
-              style={{
-                color: c.text,
-                fontSize: 14,
-                fontWeight: "600",
-                marginBottom: 4,
-              }}
-            >
-              目標貯金額
-            </Text>
-            <Text
-              style={{
-                color: c.text,
-                fontSize: 20,
-                fontWeight: "bold",
-                marginBottom: 8,
-              }}
-            >
-              ¥{savingGoal?.amount.toLocaleString()}
-            </Text>
-
-            {/* 目標期限 */}
-            {savingGoal?.deadline && (
-              <>
-                <Text
-                  style={{
-                    color: c.placeholder,
-                    fontSize: 12,
-                    marginBottom: 2,
-                  }}
-                >
-                  目標期限
-                </Text>
-                <Text
-                  style={{
-                    color: c.text,
-                    fontSize: 14,
-                    fontWeight: "500",
-                    marginBottom: 8,
-                  }}
-                >
-                  {new Date(savingGoal.deadline).toLocaleDateString()}
-                </Text>
-              </>
-            )}
-
-            {/* 残り日数 */}
+        {/* 期限切れの場合 */}
+        {0 <= remainingDays && (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 6,
+                backgroundColor: c.card,
+                borderRadius: 16,
+                padding: 16,
+                marginVertical: 8,
+                shadowColor: "#000",
+                shadowOpacity: theme === "light" ? 0.05 : 0.3,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 3,
               }}
             >
-              <Text style={{ color: c.text, fontSize: 14 }}>残り日数</Text>
+              {/* 通常表示 */}
               <Text
-                style={{ color: c.accent, fontSize: 14, fontWeight: "600" }}
+                style={{
+                  color: c.text,
+                  fontSize: 16,
+                  fontWeight: "700",
+                  marginBottom: 12,
+                }}
               >
-                {remainingDays}日
+                現在の貯金目標
               </Text>
-            </View>
 
-            {/* プログレスバー */}
-            <View
-              style={{
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: c.secondary,
-                overflow: "hidden",
-              }}
-            >
+              {/* 目標貯金額 */}
+              <Text
+                style={{
+                  color: c.text,
+                  fontSize: 14,
+                  fontWeight: "600",
+                  marginBottom: 4,
+                }}
+              >
+                目標貯金額
+              </Text>
+
+              <Text
+                style={{
+                  color: c.text,
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  marginBottom: 8,
+                }}
+              >
+                ¥{savingGoal?.amount.toLocaleString()}
+              </Text>
+
+              {/* 目標期限 */}
+              {savingGoal?.deadline && (
+                <>
+                  <Text
+                    style={{
+                      color: c.placeholder,
+                      fontSize: 12,
+                      marginBottom: 2,
+                    }}
+                  >
+                    目標期限
+                  </Text>
+
+                  <Text
+                    style={{
+                      color: c.text,
+                      fontSize: 14,
+                      fontWeight: "500",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {new Date(savingGoal.deadline).toLocaleDateString()}
+                  </Text>
+                </>
+              )}
+
+              {/* 残り日数 */}
               <View
                 style={{
-                  width: `${progress * 100}%`,
-                  height: "100%",
-                  backgroundColor: c.accent,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 6,
                 }}
-              />
+              >
+                <Text style={{ color: c.text, fontSize: 14 }}>残り日数</Text>
+
+                <Text
+                  style={{
+                    color: c.accent,
+                    fontSize: 14,
+                    fontWeight: "600",
+                  }}
+                >
+                  {remainingDays}日
+                </Text>
+              </View>
+
+              {/* プログレスバー */}
+              <View
+                style={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: c.secondary,
+                  overflow: "hidden",
+                }}
+              >
+                <View
+                  style={{
+                    width: `${progress * 100}%`,
+                    height: "100%",
+                    backgroundColor: c.accent,
+                  }}
+                />
+              </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
+          </TouchableWithoutFeedback>
+        )}
         {/* ✅ カテゴリー別支出 */}
         {/* <View style={[styles.card, { backgroundColor: c.card, flex: 1 }]}>
           <Text style={[styles.label, { color: c.text, marginBottom: 12 }]}>
@@ -670,6 +730,11 @@ const styles = StyleSheet.create({
   subAmount: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  subLabel: {
+    fontSize: 13,
+    opacity: 0.6,
+    marginTop: 4,
   },
   inputCard: {
     borderRadius: 16,
