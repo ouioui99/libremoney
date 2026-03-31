@@ -55,7 +55,9 @@ export default function SavingsGoalScreen({ navigation }: any) {
           setAmount(String(goal.amount));
           setDeadline(new Date(goal.deadline));
           setOriginalGoal(goal);
-          setIsEdit(true);
+          if (new Date(goal.deadline) < today) {
+            setIsEdit(true);
+          }
         }
       } catch (e) {
         console.error("目標データ読み込みエラー:", e);
