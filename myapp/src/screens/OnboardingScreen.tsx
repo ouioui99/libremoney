@@ -17,6 +17,10 @@ import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../theme/colors";
 import TargetSetting from "../components/onboarding/TargetSetting";
 import RegularExpenseSetting from "../components/onboarding/RegularExpenseSetting";
+import { getItemsFromStorage } from "../util/storageUtils";
+import { STORAGE_KEYS } from "../util/constants";
+import { Expense } from "../types/models";
+import ConfirmSkipRegularModal from "../components/ConfirmSkipRegularModal";
 
 const { width } = Dimensions.get("window");
 
@@ -34,13 +38,30 @@ export default function OnboardingScreen({ navigation }: Props) {
   const [edditFinish, setEdditFinish] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleNext = () => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handleNext = async () => {
     if (page === 1) {
       setSubmitting(true);
     } else if (page !== 1 && page < 3) {
       pagerRef.current?.setPage(page + 1);
     } else {
-      navigation.replace("MainTabs");
+      const storedRegularExpenses = await getItemsFromStorage<Expense>(
+        STORAGE_KEYS.REGULARLY_EXPENSES,
+      );
+
+      const storedRegularIncomes = await getItemsFromStorage<Expense>(
+        STORAGE_KEYS.REGULARLY_INCOMES,
+      );
+
+      const hasRegularExpenses = storedRegularExpenses.length > 0;
+      const hasRegularIncomes = storedRegularIncomes.length > 0;
+
+      if (hasRegularExpenses && hasRegularIncomes) {
+        navigation.replace("MainTabs");
+      } else {
+        setShowConfirmModal(true);
+      }
     }
   };
 
@@ -107,6 +128,17 @@ export default function OnboardingScreen({ navigation }: Props) {
           {page === 1 ? "設定する" : page === 3 ? "開始する" : "次へ"}
         </Text>
       </TouchableOpacity>
+      <ConfirmSkipRegularModal
+        visible={showConfirmModal}
+        onBack={() => {
+          setShowConfirmModal(false);
+          pagerRef.current?.setPage(2);
+        }}
+        onConfirm={() => {
+          setShowConfirmModal(false);
+          navigation.replace("MainTabs");
+        }}
+      />
     </View>
   );
 }
