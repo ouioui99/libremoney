@@ -356,7 +356,7 @@ export default function EditExpenseModal({
             {/* 削除ボタン */}
             <TouchableOpacity
               style={{
-                backgroundColor: c.error,
+                backgroundColor: c.danger,
                 padding: 14,
                 borderRadius: 10,
                 alignItems: "center",

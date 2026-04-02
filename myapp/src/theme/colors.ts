@@ -15,6 +15,7 @@ export const colors = {
     placeholder: "#A0A0A0", // 入力欄のプレースホルダー
     success: "#4CAF50", // 成功表示
     error: "red", // エラー表示
+    danger: "#EF4444",
     warning: "#FF9800", // 警告表示
     info: "#26C6DA", // 情報表示
     disabled: "#D6D6D6",
@@ -36,6 +37,7 @@ export const colors = {
     placeholder: "#888888",
     success: "#66BB6A",
     error: "red",
+    danger: "#EF4444",
     warning: "#FFA726",
     info: "#26C6DA",
     disabled: "#555555",
