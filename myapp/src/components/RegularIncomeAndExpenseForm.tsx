@@ -158,7 +158,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.formContainer}>
-        <View style={{ width: "95%", maxWidth: 400 }}>
+        <View style={{ width: "100%", maxWidth: 400 }}>
           <View style={[styles.card, { backgroundColor: c.card }]}>
             {/* タイトル（任意） */}
             {/* <Text style={[styles.title, { color: c.text }]}>
@@ -168,6 +168,9 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
             {/* 金額 */}
             <Text style={[styles.label, { color: c.text }]}>金額</Text>
             <TextInput
+              keyboardType="numeric"
+              placeholder="例: 50000"
+              placeholderTextColor={c.placeholder}
               value={amount}
               onChangeText={(text) => {
                 setAmount(text);
