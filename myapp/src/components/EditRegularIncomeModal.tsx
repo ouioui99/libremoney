@@ -71,6 +71,9 @@ export default function EditRegularIncomeModal({
               onUpdate(id, amount, memo, catId, cycle);
               onClose(); // 保存したら閉じる
             }}
+            onDelete={() => {
+              console.log("ddd");
+            }}
             // フォームのインターフェース上必須なため定義（編集時は呼ばれない設計）
             onAdd={() => {}}
           />

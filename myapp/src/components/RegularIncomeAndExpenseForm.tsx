@@ -36,6 +36,7 @@ type Props = {
     categoryId: string,
     cycleRule: CycleRule["type"],
   ) => void;
+  onDelete?: (id: string) => void;
   onPressCategorySelect: () => void;
   type: "expense" | "income";
   itemToEdit?: RegularIncome;
@@ -47,6 +48,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
   categories,
   onAdd,
   onUpdate,
+  onDelete,
   onPressCategorySelect,
   type,
   itemToEdit,
@@ -288,6 +290,25 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
                 {isEditMode ? "更新する" : "追加する"}
               </Text>
             </TouchableOpacity>
+
+            {isEditMode && itemToEdit && onDelete && (
+              <TouchableOpacity
+                style={[styles.deleteButton, { backgroundColor: c.danger }]}
+                onPress={() => {
+                  Alert.alert("削除確認", "この定期項目を削除しますか？", [
+                    { text: "キャンセル", style: "cancel" },
+                    {
+                      text: "削除",
+                      style: "destructive",
+                      onPress: () => onDelete(itemToEdit.id),
+                    },
+                  ]);
+                }}
+              >
+                <Ionicons name="trash-outline" size={20} color="#fff" />
+                <Text style={styles.deleteButtonText}>削除する</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -364,6 +385,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   addButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 6,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+
+  deleteButtonText: {
     color: "#fff",
     fontSize: 16,
     marginLeft: 6,
