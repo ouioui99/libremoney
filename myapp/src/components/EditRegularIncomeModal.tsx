@@ -32,6 +32,7 @@ type Props = {
   setSelectedCategory: React.Dispatch<
     React.SetStateAction<Category | undefined>
   >;
+  onDeleteItem: (id: string) => void; // アイテム削除のハンドラー
 };
 
 export default function EditRegularIncomeModal({
@@ -44,6 +45,7 @@ export default function EditRegularIncomeModal({
   onPressCategorySelect,
   selectedCategory,
   setSelectedCategory,
+  onDeleteItem,
 }: Props) {
   // item が null の場合は何も表示しない（または空のModalを返す）
   if (!item) return null;
@@ -71,8 +73,10 @@ export default function EditRegularIncomeModal({
               onUpdate(id, amount, memo, catId, cycle);
               onClose(); // 保存したら閉じる
             }}
-            onDelete={() => {
-              console.log("ddd");
+            onDelete={(itemId) => {
+              console.log(`Deleting item with ID: ${itemId}`);
+
+              //onDeleteItem(itemId);
             }}
             // フォームのインターフェース上必須なため定義（編集時は呼ばれない設計）
             onAdd={() => {}}

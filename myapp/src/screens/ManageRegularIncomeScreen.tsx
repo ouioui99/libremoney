@@ -192,6 +192,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           // 編集が終わったら編集用Stateもクリア（新規側には影響しない）
           setEditingCategory(undefined);
         }}
+        onDeleteItem={(itemId) => console.log(itemId)}
       />
 
       {/* カテゴリーセレクター */}

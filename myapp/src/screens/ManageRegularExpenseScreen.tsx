@@ -81,6 +81,20 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
     setEditModalVisible(true);
   };
 
+  const onDeleteItem = (id: string) => {
+    Alert.alert("削除確認", "この支出を削除しますか？", [
+      { text: "キャンセル", style: "cancel" },
+      {
+        text: "削除",
+        style: "destructive",
+        onPress: async () => {
+          const filtered = expenses.filter((item) => item.id !== id);
+          saveExpenses(filtered);
+        },
+      },
+    ]);
+  };
+
   // 更新処理
   const handleUpdate = (
     id: string,
@@ -200,6 +214,7 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
           // 編集が終わったら編集用Stateもクリア（新規側には影響しない）
           setEditingCategory(undefined);
         }}
+        onDeleteItem={(id) => console.log(id)}
       />
 
       {/* カテゴリーセレクター */}
