@@ -74,9 +74,7 @@ export default function EditRegularIncomeModal({
               onClose(); // 保存したら閉じる
             }}
             onDelete={(itemId) => {
-              console.log(`Deleting item with ID: ${itemId}`);
-
-              //onDeleteItem(itemId);
+              onDeleteItem(itemId);
             }}
             // フォームのインターフェース上必須なため定義（編集時は呼ばれない設計）
             onAdd={() => {}}

@@ -17,6 +17,7 @@ import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
 import RegularIncomeAndExpenseForm from "../components/RegularIncomeAndExpenseForm";
 import RegularIncomeAndExpenseList from "../components/RegularIncomeAndExpenseList";
 import EditRegularIncomeModal from "../components/EditRegularIncomeModal";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 export default function ManageRegularExpenseScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -40,6 +41,8 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
 
   // カテゴリ選択モーダルが「新規から呼ばれたか」「編集から呼ばれたか」を判定するフラグ
   const [isCategoryForEdit, setIsCategoryForEdit] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     loadExpenses();
@@ -81,20 +84,6 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
     setEditModalVisible(true);
   };
 
-  const onDeleteItem = (id: string) => {
-    Alert.alert("削除確認", "この支出を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          const filtered = expenses.filter((item) => item.id !== id);
-          saveExpenses(filtered);
-        },
-      },
-    ]);
-  };
-
   // 更新処理
   const handleUpdate = (
     id: string,
@@ -114,17 +103,12 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("削除確認", "この支出を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          const filtered = expenses.filter((item) => item.id !== id);
-          saveExpenses(filtered);
-        },
-      },
-    ]);
+    const filtered = expenses.filter((item) => item.id !== id);
+    saveExpenses(filtered);
+    setEditModalVisible(false);
+    setEditingItem(null);
+
+    showSnackbar("定期支出を削除しました");
   };
 
   const handlePressCategorySelectInEdit = () => {
@@ -214,7 +198,7 @@ export default function ManageRegularExpenseScreen({ navigation }: any) {
           // 編集が終わったら編集用Stateもクリア（新規側には影響しない）
           setEditingCategory(undefined);
         }}
-        onDeleteItem={(id) => console.log(id)}
+        onDeleteItem={(id) => handleDelete(id)}
       />
 
       {/* カテゴリーセレクター */}

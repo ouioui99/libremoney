@@ -17,6 +17,7 @@ import CycleRuleSettingModal from "../components/CycleRuleSettingModal";
 import RegularIncomeAndExpenseForm from "../components/RegularIncomeAndExpenseForm";
 import RegularIncomeAndExpenseList from "../components/RegularIncomeAndExpenseList";
 import EditRegularIncomeModal from "../components/EditRegularIncomeModal";
+import { useSnackbar } from "../contexts/SnackbarContext";
 
 export default function ManageRegularIncomeScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -40,6 +41,8 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
 
   // カテゴリ選択モーダルが「新規から呼ばれたか」「編集から呼ばれたか」を判定するフラグ
   const [isCategoryForEdit, setIsCategoryForEdit] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   useEffect(() => {
     loadIncomes();
@@ -100,17 +103,13 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("削除確認", "この収入を削除しますか？", [
-      { text: "キャンセル", style: "cancel" },
-      {
-        text: "削除",
-        style: "destructive",
-        onPress: async () => {
-          const filtered = incomes.filter((item) => item.id !== id);
-          saveIncomes(filtered);
-        },
-      },
-    ]);
+    const filtered = incomes.filter((item) => item.id !== id);
+    saveIncomes(filtered);
+
+    setEditModalVisible(false);
+    setEditingItem(null);
+
+    showSnackbar("定期収入を削除しました");
   };
 
   // カテゴリ選択時の共通処理
@@ -192,7 +191,7 @@ export default function ManageRegularIncomeScreen({ navigation }: any) {
           // 編集が終わったら編集用Stateもクリア（新規側には影響しない）
           setEditingCategory(undefined);
         }}
-        onDeleteItem={(itemId) => console.log(itemId)}
+        onDeleteItem={(itemId) => handleDelete(itemId)}
       />
 
       {/* カテゴリーセレクター */}
