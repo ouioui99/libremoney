@@ -40,7 +40,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
     !isNaN(Number(amount)) &&
     amount.trim() !== "" &&
     deadline !== null &&
-    1 < Number(amount);
+    1 <= Number(amount);
 
   // 🔹 初回読み込み（既存データがある場合は編集モードに）
   useEffect(() => {
@@ -55,7 +55,8 @@ export default function SavingsGoalScreen({ navigation }: any) {
           setAmount(String(goal.amount));
           setDeadline(new Date(goal.deadline));
           setOriginalGoal(goal);
-          if (new Date(goal.deadline) < today) {
+
+          if (new Date(goal.deadline) > today) {
             setIsEdit(true);
           }
         }
@@ -95,6 +96,7 @@ export default function SavingsGoalScreen({ navigation }: any) {
 
   // 🔹 保存処理
   const handleSave = () => {
+    setShowError(true);
     if (!isValid) return;
 
     const savingGoal = {
@@ -204,17 +206,17 @@ export default function SavingsGoalScreen({ navigation }: any) {
               </View>
               {/* ★ エラーメッセージ */}
               {showError && amount.trim() === "" && (
-                <Text style={[styles.errorText]}>
+                <Text style={[styles.errorText, { color: c.error }]}>
                   目標金額を入力してください
                 </Text>
               )}
               {showError && amount.trim() !== "" && isNaN(Number(amount)) && (
-                <Text style={[styles.errorText]}>
+                <Text style={[styles.errorText, { color: c.error }]}>
                   目標金額は数字で入力してください
                 </Text>
               )}
               {showError && amount.trim() !== "" && Number(amount) < 1 && (
-                <Text style={[styles.errorText]}>
+                <Text style={[styles.errorText, { color: c.error }]}>
                   目標金額は1以上の数字で入力してください
                 </Text>
               )}
@@ -357,6 +359,5 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 14,
     marginLeft: 30,
-    color: "red",
   },
 });
