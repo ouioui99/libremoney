@@ -48,6 +48,8 @@ import {
 import TrackingModal from "../components/TrackingModal";
 import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { useSnackbar } from "../contexts/SnackbarContext";
+import ConfirmSkipRegularModal from "../components/ConfirmSkipRegularModal";
+import ConfirmRegistRegularModal from "../components/ConfirmRegistRegularModal";
 // import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function HomeScreen({ navigation }: any) {
@@ -69,6 +71,7 @@ export default function HomeScreen({ navigation }: any) {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryListModal, setShowCategoryListModal] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [calculatedTodayUsableAmount, setCalculatedTodayUsableAmount] =
     useState(0);
@@ -109,6 +112,8 @@ export default function HomeScreen({ navigation }: any) {
     // AsyncStorage.setItem("categories", JSON.stringify([]));
     // AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify([]));
     // AsyncStorage.setItem(STORAGE_KEYS.INCOMES, JSON.stringify([]));
+    // AsyncStorage.setItem(STORAGE_KEYS.REGULARLY_EXPENSES, JSON.stringify([]));
+    // AsyncStorage.setItem(STORAGE_KEYS.REGULARLY_INCOMES, JSON.stringify([]));
 
     (async () => {
       try {
@@ -184,6 +189,13 @@ export default function HomeScreen({ navigation }: any) {
       const storedRegularyExpenses = await getItemsFromStorage<RegularIncome>(
         STORAGE_KEYS.REGULARLY_EXPENSES,
       );
+
+      if (
+        storedRegularyIncomes.length <= 0 ||
+        storedRegularyExpenses.length <= 0
+      ) {
+        setShowConfirmModal(true);
+      }
 
       if (storedSavingGoal.length > 0) {
         const savingGoal = storedSavingGoal[0];
@@ -703,6 +715,16 @@ export default function HomeScreen({ navigation }: any) {
         visible={showTrackingModal}
         onAllow={handleAllow}
         onSkip={() => setShowTrackingModal(false)}
+      />
+      <ConfirmRegistRegularModal
+        visible={showConfirmModal}
+        onConfirm={() => {
+          navigation.navigate("設定");
+          setShowConfirmModal(false);
+        }}
+        onBack={() => {
+          setShowConfirmModal(false);
+        }}
       />
     </SafeAreaLayout>
   );
