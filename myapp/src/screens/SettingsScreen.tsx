@@ -13,6 +13,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import { colors } from "../theme/colors";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
+import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function SettingsScreen({ navigation }: any) {
   const { theme, setMode, mode } = useTheme();
@@ -48,7 +49,7 @@ export default function SettingsScreen({ navigation }: any) {
     onPress?: () => void;
   };
 
-  const adUnitId = "ca-app-pub-3940256099942544/6300978111";
+  const adUnitId = AD_UNIT_IDS.SettingsScreen;
 
   const sections: { title: string; data: SettingsItem[] }[] = [
     {
