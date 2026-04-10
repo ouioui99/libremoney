@@ -83,7 +83,6 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
       const currentCategory = categories.find(
         (cat) => cat.id === itemToEdit.categoryId,
       );
-      console.log(currentCategory);
       if (currentCategory) {
         setSelectedCategory(currentCategory);
       }
@@ -95,6 +94,10 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
       setSelectedCategory(undefined);
     }
   }, [itemToEdit, categories, setSelectedCategory]);
+
+  useEffect(() => {
+    setErrors((prev) => ({ ...prev, category: undefined }));
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -217,7 +220,9 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
               カテゴリー
             </Text>
             <TouchableOpacity
-              onPress={onPressCategorySelect}
+              onPress={() => {
+                onPressCategorySelect();
+              }}
               style={[
                 styles.categoryButton,
                 {
@@ -319,6 +324,7 @@ const RegularIncomeAndExpenseForm: React.FC<Props> = ({
           onSave={(rule) => {
             setCycleRuleType(rule);
             setShowCycleRuleSettingModal(false);
+            setErrors((prev) => ({ ...prev, cycle: undefined }));
           }}
           initialCycle={cycleRuleType}
         />
