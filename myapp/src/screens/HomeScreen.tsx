@@ -50,6 +50,7 @@ import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 import { useSnackbar } from "../contexts/SnackbarContext";
 import ConfirmSkipRegularModal from "../components/ConfirmSkipRegularModal";
 import ConfirmRegistRegularModal from "../components/ConfirmRegistRegularModal";
+import { AD_UNIT_IDS } from "../../adConfig";
 // import { AD_UNIT_IDS } from "../../adConfig";
 
 export default function HomeScreen({ navigation }: any) {
@@ -88,7 +89,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const { showSnackbar } = useSnackbar();
 
-  // const adUnitId = AD_UNIT_IDS.HomeScreen;
+  const adUnitId = AD_UNIT_IDS.HomeScreen;
 
   const handleAllow = async () => {
     await requestTrackingPermissionsAsync();
@@ -703,13 +704,13 @@ export default function HomeScreen({ navigation }: any) {
         />
       </View>
       <View style={{ marginVertical: 10, alignItems: "center" }}>
-        {/* <BannerAd
+        <BannerAd
           unitId={adUnitId}
           size={BannerAdSize.LARGE_BANNER}
           requestOptions={{
             requestNonPersonalizedAdsOnly: true,
           }}
-        /> */}
+        />
       </View>
       <TrackingModal
         visible={showTrackingModal}
