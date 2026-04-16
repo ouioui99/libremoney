@@ -46,7 +46,10 @@ import {
   TestIds,
 } from "react-native-google-mobile-ads";
 import TrackingModal from "../components/TrackingModal";
-import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
+import {
+  getTrackingPermissionsAsync,
+  requestTrackingPermissionsAsync,
+} from "expo-tracking-transparency";
 import { useSnackbar } from "../contexts/SnackbarContext";
 import ConfirmSkipRegularModal from "../components/ConfirmSkipRegularModal";
 import ConfirmRegistRegularModal from "../components/ConfirmRegistRegularModal";
@@ -99,9 +102,13 @@ export default function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     const check = async () => {
-      const asked = await AsyncStorage.getItem("trackingAsked");
-      if (!asked) setShowTrackingModal(true);
+      const { status } = await getTrackingPermissionsAsync();
+
+      if (status === "undetermined") {
+        setShowTrackingModal(true);
+      }
     };
+
     check();
   }, []);
 
@@ -173,7 +180,7 @@ export default function HomeScreen({ navigation }: any) {
     })();
   }, [isIncomeMode, showCategoryListModal]);
 
-  const fetchAndCalculate = async () => {
+  const fetchAndCalculate = async (isFocusPage: boolean) => {
     try {
       const storedExpenses = await getItemsFromStorage<Expense>(
         STORAGE_KEYS.EXPENSES,
@@ -192,8 +199,9 @@ export default function HomeScreen({ navigation }: any) {
       );
 
       if (
-        storedRegularyIncomes.length <= 0 ||
-        storedRegularyExpenses.length <= 0
+        (storedRegularyIncomes.length <= 0 ||
+          storedRegularyExpenses.length <= 0) &&
+        isFocusPage
       ) {
         setShowConfirmModal(true);
       }
@@ -237,13 +245,13 @@ export default function HomeScreen({ navigation }: any) {
   // 画面フォーカス時に実行
   useFocusEffect(
     useCallback(() => {
-      fetchAndCalculate();
+      fetchAndCalculate(true);
     }, []),
   );
 
   // remainingDays, expenses, incomes に依存して再計算
   useEffect(() => {
-    fetchAndCalculate();
+    fetchAndCalculate(false);
   }, [remainingDays, expenses, incomes]);
 
   const isValid =
@@ -316,8 +324,16 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background, flex: 1 }}>
-      <View style={{ flex: 1, padding: 16 }}>
-        {/* 今日使える金額 */}
+      <ScrollView
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 40,
+          flexGrow: 1,
+        }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
+        {/* 今日使える金額*/}
         {remainingDays < 0 ? (
           <View style={[styles.card, { backgroundColor: c.card }]}>
             <Text
@@ -364,163 +380,154 @@ export default function HomeScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={[styles.card, { backgroundColor: c.card }]}>
-              <Text style={[styles.label, { color: c.text }]}>
-                今日使える金額
-              </Text>
+          <View style={[styles.card, { backgroundColor: c.card }]}>
+            <Text style={[styles.label, { color: c.text }]}>
+              今日使える金額
+            </Text>
 
-              <Text style={[styles.subLabel, { color: c.text }]}>残り</Text>
+            <Text style={[styles.subLabel, { color: c.text }]}>残り</Text>
 
-              <Text style={[styles.mainAmount, { color: c.accent }]}>
-                ¥{calculatedTodayUsableAmount.toLocaleString()}
-              </Text>
-            </View>
-          </TouchableWithoutFeedback>
+            <Text style={[styles.mainAmount, { color: c.accent }]}>
+              ¥{calculatedTodayUsableAmount.toLocaleString()}
+            </Text>
+          </View>
         )}
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          {/* 支出登録 */}
-          <View style={[styles.inputCard, { backgroundColor: c.card }]}>
-            {/* トグルスイッチ */}
-            <View
+        {/* 支出登録 */}
+        <View style={[styles.inputCard, { backgroundColor: c.card }]}>
+          {/* トグルスイッチ */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                setIsIncomeMode(false);
+                setSelectedCategory(undefined);
+              }}
               style={{
-                flexDirection: "row",
-                justifyContent: "center",
+                flex: 1,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: !isIncomeMode ? c.expense : c.secondary,
+                marginRight: 4,
+                alignItems: "center",
               }}
             >
-              <TouchableOpacity
-                onPress={() => {
-                  setIsIncomeMode(false);
-                  setSelectedCategory(undefined);
-                }}
-                style={{
-                  flex: 1,
-                  padding: 8,
-                  borderRadius: 8,
-                  backgroundColor: !isIncomeMode ? c.expense : c.secondary,
-                  marginRight: 4,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: c.text }}>支出</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setIsIncomeMode(true);
-                  setSelectedCategory(undefined);
-                }}
-                style={{
-                  flex: 1,
-                  padding: 8,
-                  borderRadius: 8,
-                  backgroundColor: isIncomeMode ? c.income : c.secondary,
-                  marginLeft: 4,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: c.text }}>収入</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputRow}>
-              <TextInput
-                ref={inputRef}
-                style={[styles.input, { borderColor: c.border, color: c.text }]}
-                placeholder="金額を入力"
-                placeholderTextColor={c.placeholder}
-                keyboardType="numeric"
-                value={expense}
-                onChangeText={setExpense}
-              />
-            </View>
-            {showError && expense.trim() !== "" && isNaN(Number(expense)) && (
-              <Text style={[styles.errorText]}>
-                目標金額は数字で入力してください
-              </Text>
-            )}
-
-            <View style={styles.buttonRow}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingRight: 8 }} // 端の余白を少し追加
-              >
-                {displaiedCategories.map((cat) => (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[
-                      styles.categoryButton,
-                      {
-                        backgroundColor:
-                          selectedCategory?.id === cat.id
-                            ? c.accent
-                            : c.secondary,
-                      },
-                    ]}
-                    onPress={() => setSelectedCategory(cat)}
-                  >
-                    <Text
-                      style={[
-                        styles.buttonText,
-                        {
-                          fontSize: 14,
-                          color:
-                            selectedCategory?.id === cat.id ? "#fff" : c.text,
-                        },
-                      ]}
-                    >
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-
-                <TouchableOpacity
-                  style={[
-                    styles.categoryButton,
-                    { backgroundColor: c.secondary },
-                  ]}
-                  onPress={() => setShowCategoryModal(true)}
-                >
-                  <Ionicons
-                    name="ellipsis-horizontal"
-                    size={20}
-                    color={c.text}
-                  />
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-
+              <Text style={{ color: c.text }}>支出</Text>
+            </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.button,
-                {
-                  backgroundColor:
-                    !selectedCategory || !expense
-                      ? c.secondary // 無効時はグレー背景
-                      : isIncomeMode
-                        ? c.income
-                        : c.expense,
-                  opacity: !selectedCategory || !expense ? 0.5 : 1, // 視覚的に無効化
-                },
-              ]}
-              onPress={handleAddExpenseOrIncome}
-              disabled={!selectedCategory || !expense} // ←無効化条件
+              onPress={() => {
+                setIsIncomeMode(true);
+                setSelectedCategory(undefined);
+              }}
+              style={{
+                flex: 1,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: isIncomeMode ? c.income : c.secondary,
+                marginLeft: 4,
+                alignItems: "center",
+              }}
             >
-              <Text
-                style={[
-                  styles.buttonText,
-                  {
-                    color:
-                      !selectedCategory || !expense ? c.placeholder : "#fff", // 無効時は淡い文字
-                  },
-                ]}
-              >
-                登録
-              </Text>
+              <Text style={{ color: c.text }}>収入</Text>
             </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
+
+          <View style={styles.inputRow}>
+            <TextInput
+              ref={inputRef}
+              style={[styles.input, { borderColor: c.border, color: c.text }]}
+              placeholder="金額を入力"
+              placeholderTextColor={c.placeholder}
+              keyboardType="numeric"
+              value={expense}
+              onChangeText={setExpense}
+            />
+          </View>
+          {showError && expense.trim() !== "" && isNaN(Number(expense)) && (
+            <Text style={[styles.errorText]}>
+              目標金額は数字で入力してください
+            </Text>
+          )}
+
+          <View style={styles.buttonRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingRight: 8 }} // 端の余白を少し追加
+            >
+              {displaiedCategories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.categoryButton,
+                    {
+                      backgroundColor:
+                        selectedCategory?.id === cat.id
+                          ? c.accent
+                          : c.secondary,
+                    },
+                  ]}
+                  onPress={() => setSelectedCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      {
+                        fontSize: 14,
+                        color:
+                          selectedCategory?.id === cat.id ? "#fff" : c.text,
+                      },
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={[
+                  styles.categoryButton,
+                  { backgroundColor: c.secondary },
+                ]}
+                onPress={() => setShowCategoryModal(true)}
+              >
+                <Ionicons name="ellipsis-horizontal" size={20} color={c.text} />
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                backgroundColor:
+                  !selectedCategory || !expense
+                    ? c.secondary // 無効時はグレー背景
+                    : isIncomeMode
+                      ? c.income
+                      : c.expense,
+                opacity: !selectedCategory || !expense ? 0.5 : 1, // 視覚的に無効化
+              },
+            ]}
+            onPress={handleAddExpenseOrIncome}
+            disabled={!selectedCategory || !expense} // ←無効化条件
+          >
+            <Text
+              style={[
+                styles.buttonText,
+                {
+                  color: !selectedCategory || !expense ? c.placeholder : "#fff", // 無効時は淡い文字
+                },
+              ]}
+            >
+              登録
+            </Text>
+          </TouchableOpacity>
+        </View>
         {/* 目標貯金額 + 残り日数 */}
         {/* 期限切れの場合 */}
         {0 <= remainingDays && (
@@ -684,7 +691,6 @@ export default function HomeScreen({ navigation }: any) {
             )}
           />
         </View> */}
-
         {/* カテゴリーセレクター */}
         <CategorySelector
           categories={isIncomeMode ? incomeCategories : expenseCategories}
@@ -702,7 +708,7 @@ export default function HomeScreen({ navigation }: any) {
           setShowCategoryListModal={setShowCategoryListModal}
           type={isIncomeMode ? "income" : "expense"}
         />
-      </View>
+      </ScrollView>
       <View style={{ marginVertical: 10, alignItems: "center" }}>
         <BannerAd
           unitId={adUnitId}
@@ -717,16 +723,18 @@ export default function HomeScreen({ navigation }: any) {
         onAllow={handleAllow}
         onSkip={() => setShowTrackingModal(false)}
       />
-      <ConfirmRegistRegularModal
-        visible={showConfirmModal}
-        onConfirm={() => {
-          navigation.navigate("設定");
-          setShowConfirmModal(false);
-        }}
-        onBack={() => {
-          setShowConfirmModal(false);
-        }}
-      />
+      {!showTrackingModal && (
+        <ConfirmRegistRegularModal
+          visible={showConfirmModal}
+          onConfirm={() => {
+            navigation.navigate("設定");
+            setShowConfirmModal(false);
+          }}
+          onBack={() => {
+            setShowConfirmModal(false);
+          }}
+        />
+      )}
     </SafeAreaLayout>
   );
 }
