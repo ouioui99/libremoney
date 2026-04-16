@@ -43,7 +43,7 @@ const TrackingModal = ({ visible, onAllow, onSkip }: Props) => {
           {/* 説明 */}
           <Text style={[styles.description, { color: c.subText }]}>
             次の画面で広告設定を選択できます。{"\n"}
-            許可すると、あなたに合った広告が表示されます。{"\n"}
+            許可すると、より関連性の高い広告が表示される場合があります。{"\n"}
             許可しなくても
             <Text style={{ color: c.income, fontWeight: "800" }}>無料で</Text>
             ご利用いただけます。
@@ -55,14 +55,14 @@ const TrackingModal = ({ visible, onAllow, onSkip }: Props) => {
             onPress={onAllow}
           >
             <Text style={[styles.primaryText, { color: c.textOnAccent }]}>
-              設定を確認する
+              続ける
             </Text>
           </TouchableOpacity>
 
           {/* スキップ */}
           <TouchableOpacity onPress={onSkip}>
             <Text style={[styles.skipText, { color: c.placeholder }]}>
-              あとで
+              閉じる
             </Text>
           </TouchableOpacity>
         </View>
