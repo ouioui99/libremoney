@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Animated,
+  useWindowDimensions,
 } from "react-native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import CalendarModal from "../components/CalenderModal";
@@ -57,6 +58,10 @@ export default function ExpenseScreen() {
   // ▼ フェード・色アニメーション設定
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const colorAnim = useRef(new Animated.Value(0)).current; // 0 = expense, 1 = income
+
+  const { width, height } = useWindowDimensions();
+
+  const isTablet = width >= 768;
 
   const [errors, setErrors] = useState<{
     amount?: string;
@@ -343,7 +348,8 @@ export default function ExpenseScreen() {
                 textAlign: "right",
                 marginBottom: 5,
                 borderWidth: 2,
-                borderColor: errors.amount ? c.error : "transparent",
+                borderColor: "transparent",
+                borderBottomColor: errors.amount ? c.error : "transparent",
               }}
             >
               {expression || "0"}
@@ -354,6 +360,7 @@ export default function ExpenseScreen() {
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
+                //justifyContent: "center",
                 alignItems: "center",
                 marginTop: 10,
                 marginBottom: 10,
@@ -407,7 +414,7 @@ export default function ExpenseScreen() {
                   <Text style={{ color: c.text, fontSize: 18 }}>
                     {selectedCategory
                       ? selectedCategory.name
-                      : "カテゴリーを選択"}
+                      : "カテゴリー選択"}
                   </Text>
                   <Ionicons name="chevron-down" size={18} color={c.text} />
                 </TouchableOpacity>
@@ -466,7 +473,19 @@ export default function ExpenseScreen() {
           />
 
           {/* 下部：電卓ボタン */}
-          <View style={{ flex: 3, justifyContent: "flex-end" }}>
+          <View
+            style={
+              isTablet
+                ? { flex: 4, justifyContent: "flex-end" }
+                : { flex: 3, justifyContent: "flex-end" }
+            }
+          >
+            {/* <View
+            style={{
+              marginTop: 5,
+              alignItems: "center",
+            }}
+          > */}
             {CALC_BUTTONS.map((row, rowIndex) => (
               <View
                 key={rowIndex}
@@ -492,6 +511,8 @@ export default function ExpenseScreen() {
                           flex: 1,
                           margin: 5,
                           aspectRatio: 1,
+                          // width: buttonSize,
+                          // height: buttonSize,
                           borderRadius: 12, // 角丸四角
                           justifyContent: "center",
                           alignItems: "center",
