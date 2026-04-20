@@ -8,6 +8,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Animated,
+  Platform,
+  Dimensions,
 } from "react-native";
 import SafeAreaLayout from "../components/SafeAreaLayout";
 import CalendarModal from "../components/CalenderModal";
@@ -65,6 +67,10 @@ export default function ExpenseScreen() {
   }>({});
 
   const firstRender = useRef(true);
+
+  const isIpad = Platform.OS === "ios" && Platform.isPad;
+  const { height } = Dimensions.get("window");
+  const isSmallDevice = height < 700; // SEは667、16は800以上
 
   useEffect(() => {
     if (firstRender.current) {
@@ -320,9 +326,14 @@ export default function ExpenseScreen() {
   return (
     <SafeAreaLayout style={{ backgroundColor: c.background }}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View style={{ flex: 1, padding: 20 }}>
+        <View style={{ flex: 1, padding: isSmallDevice ? 10 : 20 }}>
           {/* ▼ 支出・収入 切り替えトグル */}
-          <View style={{ alignItems: "center", marginBottom: 10 }}>
+          <View
+            style={{
+              alignItems: "center",
+              marginBottom: isSmallDevice ? 5 : 10,
+            }}
+          >
             <Animated.Text
               style={{
                 fontSize: 22,
@@ -335,11 +346,11 @@ export default function ExpenseScreen() {
             </Animated.Text>
           </View>
           {/* 上部：金額表示＋日付選択＋カテゴリー選択 */}
-          <View style={{ flex: 1.5, justifyContent: "flex-end" }}>
+          <View style={{ flex: isSmallDevice ? 1 : 1.5 }}>
             <Text
               style={{
                 color: c.text,
-                fontSize: 40,
+                fontSize: isSmallDevice ? 36 : 40, // SEなら少し小さく
                 textAlign: "right",
                 marginBottom: 5,
                 borderWidth: 2,
@@ -356,8 +367,8 @@ export default function ExpenseScreen() {
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginTop: 10,
-                marginBottom: 10,
+                marginTop: isSmallDevice ? 5 : 10,
+                marginBottom: isSmallDevice ? 5 : 10,
               }}
             >
               {/* 日付選択 */}
@@ -415,9 +426,11 @@ export default function ExpenseScreen() {
               </View>
             </View>
             <View
-              style={{
-                marginBottom: 30,
-              }}
+              style={
+                {
+                  // marginBottom: 30,
+                }
+              }
             >
               <TextInput
                 style={{
@@ -467,7 +480,13 @@ export default function ExpenseScreen() {
           />
 
           {/* 下部：電卓ボタン */}
-          <View style={{ flex: 3, justifyContent: "flex-end" }}>
+          <View
+            style={{
+              flex: 3,
+              justifyContent: "flex-end",
+              paddingHorizontal: isSmallDevice ? 26 : 0,
+            }}
+          >
             {CALC_BUTTONS.map((row, rowIndex) => (
               <View
                 key={rowIndex}
@@ -526,7 +545,7 @@ export default function ExpenseScreen() {
                       key={btn}
                       style={{
                         flex: 1,
-                        margin: 5,
+                        margin: isSmallDevice ? 3 : 5,
                         aspectRatio: 1,
                         borderRadius: 50,
                         backgroundColor:
@@ -552,7 +571,12 @@ export default function ExpenseScreen() {
                         }
                       }}
                     >
-                      <Text style={{ color: c.text, fontSize: 24 }}>
+                      <Text
+                        style={{
+                          color: c.text,
+                          fontSize: isSmallDevice ? 22 : 24,
+                        }}
+                      >
                         {displayBtn}
                       </Text>
                     </TouchableOpacity>
