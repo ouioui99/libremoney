@@ -55,16 +55,16 @@ const TrackingModal = ({ visible, onAllow, onSkip }: Props) => {
             onPress={onAllow}
           >
             <Text style={[styles.primaryText, { color: c.textOnAccent }]}>
-              続ける
+              続行
             </Text>
           </TouchableOpacity>
 
           {/* スキップ */}
-          <TouchableOpacity onPress={onSkip}>
+          {/* <TouchableOpacity onPress={onSkip}>
             <Text style={[styles.skipText, { color: c.placeholder }]}>
               閉じる
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </Modal>
